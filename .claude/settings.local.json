@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(npm install *)",
+      "Bash(npm audit *)",
+      "Bash(git remote *)",
+      "Bash(git add *)"
+    ]
+  }
+}

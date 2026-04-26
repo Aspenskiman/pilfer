@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { useGameState } from '@/hooks/useGameState'
 import { usePlayers } from '@/hooks/usePlayers'
@@ -14,6 +15,7 @@ export default function GamePage({
   params: Promise<{ code: string }>
 }) {
   const { code } = use(params)
+  const router = useRouter()
 
   const [gameId, setGameId] = useState<string | null>(null)
   const [authUser, setAuthUser] = useState<{ id: string } | null>(null)
@@ -52,6 +54,18 @@ export default function GamePage({
   const gifts = useGifts(gameId)
   const { currentPlayer, currentPlayerId } = useCurrentPlayer(players)
 
+  // Auto-redirect on status change
+  useEffect(() => {
+    if (!game) return
+    if (game.status === 'active') {
+      const isMobile = window.innerWidth < 768
+      router.push(`/game/${code}/${isMobile ? 'play' : 'stage'}`)
+    }
+    if (game.status === 'complete') {
+      router.push(`/game/${code}/recap`)
+    }
+  }, [game?.status]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const submittedIds = new Set(gifts.map((g) => g.submitted_by))
   const isHost = authUser?.id === game?.host_id
   const allSubmitted = players.length > 0 && players.every((p) => submittedIds.has(p.id))
@@ -62,16 +76,51 @@ export default function GamePage({
 
     const supabase = createClient()
 
-    // Assign random turn order to all players
-    const shuffled = [...players].sort(() => Math.random() - 0.5)
+    // Pre-flight: split players into participants (submitted a gift) and auto-spectators
+    // TODO: submittedIds is also computed at component level (line ~69) —
+    // consolidate into one when refactoring
+    const submittedByIds = new Set(gifts.map((g) => g.submitted_by))
+    const participants = players.filter((p) => submittedByIds.has(p.id))
+    const autoSpectators = players.filter((p) => !submittedByIds.has(p.id))
+
+    if (autoSpectators.length > 0) {
+      const confirmed = window.confirm(
+        `Ready to go live?\n\n` +
+        `✅ ${participants.length} participants — gifted up\n` +
+        `⚠️ ${autoSpectators.length} spectators (no gift submitted):\n` +
+        `${autoSpectators.map((p) => p.display_name).join(', ')}\n\n` +
+        `Go live anyway?`
+      )
+      if (!confirmed) {
+        setStartingGame(false)
+        return
+      }
+    }
+
+    // Mark non-submitters as spectators
+    if (autoSpectators.length > 0) {
+      await Promise.all(
+        autoSpectators.map((p) =>
+          supabase.from('players').update({ role: 'spectator' }).eq('id', p.id)
+        )
+      )
+    }
+
+    // Shuffle participants only and assign 1-indexed turn order
+    const shuffled = [...participants].sort(() => Math.random() - 0.5)
     await Promise.all(
       shuffled.map((player, i) =>
         supabase.from('players').update({ turn_order: i + 1 }).eq('id', player.id)
       )
     )
 
-    // Flip status → active (broadcasts to all connected screens via useGameState)
-    await supabase.from('party_games').update({ status: 'active' }).eq('id', game.id)
+    // Go live — set first turn and round number
+    await supabase.from('party_games').update({
+      status: 'active',
+      current_turn_player_id: shuffled[0].id,
+      round_number: 1,
+    }).eq('id', game.id)
+
     setStartingGame(false)
   }
 
@@ -90,29 +139,6 @@ export default function GamePage({
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-950">
         <p className="text-zinc-500">Loading…</p>
-      </div>
-    )
-  }
-
-  // Status-based routing
-  if (game.status === 'active') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-950 px-4">
-        <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold text-white">Game is live</h1>
-          <p className="text-zinc-400">Laptop stage coming in Phase 8.</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (game.status === 'completed') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-950 px-4">
-        <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold text-white">Game over</h1>
-          <p className="text-zinc-400">Recap coming in Phase 12.</p>
-        </div>
       </div>
     )
   }

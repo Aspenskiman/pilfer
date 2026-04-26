@@ -25,10 +25,13 @@ export async function POST(request: Request) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session
 
-    const join_code = Math.random().toString(36).substring(2, 7).toUpperCase()
+    const array = new Uint8Array(6)
+    crypto.getRandomValues(array)
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // removed ambiguous chars
+    const join_code = Array.from(array).map(b => chars[b % chars.length]).join('')
 
     const row = {
-      status: 'draft',
+      status: 'setup',
       host_id: session.metadata?.host_id ?? null,
       game_name: session.metadata?.game_name ?? null,
       join_code,

@@ -15,7 +15,7 @@ export default async function JoinCodePage({
     .eq('join_code', code.toUpperCase())
     .single()
 
-  if (!game || game.status !== 'lobby') {
+  if (!game || game.status !== 'invited') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-950 px-4">
         <div className="text-center space-y-2">

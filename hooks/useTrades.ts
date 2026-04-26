@@ -1,36 +1,36 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
-import { Gift } from '@/types'
+import { Trade } from '@/types'
 
-export function useGifts(gameId: string | null) {
-  const [gifts, setGifts] = useState<Gift[]>([])
+export function useTrades(gameId: string | null) {
+  const [trades, setTrades] = useState<Trade[]>([])
 
   useEffect(() => {
     if (!gameId) return
 
     const supabase = createClient()
 
-    async function fetchGifts() {
+    async function fetchTrades() {
       const { data } = await supabase
-        .from('gifts')
+        .from('trades')
         .select('*')
         .eq('game_id', gameId)
-      setGifts(data ?? [])
+      setTrades(data ?? [])
     }
 
-    fetchGifts()
+    fetchTrades()
 
     const channel = supabase
-      .channel(`gifts:${gameId}`)
+      .channel(`trades:${gameId}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'gifts', filter: `game_id=eq.${gameId}` },
-        () => { fetchGifts() }
+        { event: '*', schema: 'public', table: 'trades', filter: `game_id=eq.${gameId}` },
+        () => { fetchTrades() }
       )
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
   }, [gameId])
 
-  return gifts
+  return trades
 }

@@ -1,14 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
-
-export type Player = {
-  id: string
-  display_name: string
-  turn_order: number | null
-  turn_taken: boolean
-  is_active: boolean
-  joined_at: string
-}
+import { Player } from '@/types'
 
 export function usePlayers(gameId: string | null) {
   const [players, setPlayers] = useState<Player[]>([])
@@ -21,7 +13,7 @@ export function usePlayers(gameId: string | null) {
     async function fetchPlayers() {
       const { data } = await supabase
         .from('players')
-        .select('id, display_name, turn_order, turn_taken, is_active, joined_at')
+        .select('*')
         .eq('game_id', gameId)
         .eq('is_active', true)
         .order('joined_at', { ascending: true })

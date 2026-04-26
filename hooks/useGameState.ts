@@ -1,17 +1,9 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
-
-export type Game = {
-  id: string
-  game_name: string
-  join_code: string
-  status: string
-  host_id: string | null
-  player_limit: number | null
-}
+import { PartyGame } from '@/types'
 
 export function useGameState(gameId: string | null) {
-  const [game, setGame] = useState<Game | null>(null)
+  const [game, setGame] = useState<PartyGame | null>(null)
 
   useEffect(() => {
     if (!gameId) return
@@ -21,7 +13,7 @@ export function useGameState(gameId: string | null) {
     async function fetchGame() {
       const { data } = await supabase
         .from('party_games')
-        .select('id, game_name, join_code, status, host_id, player_limit')
+        .select('*')
         .eq('id', gameId)
         .single()
       if (data) setGame(data)
@@ -33,8 +25,8 @@ export function useGameState(gameId: string | null) {
       .channel(`game-state:${gameId}`)
       .on(
         'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'party_games', filter: `id=eq.${gameId}` },
-        (payload) => { setGame(payload.new as Game) }
+        { event: '*', schema: 'public', table: 'party_games', filter: `id=eq.${gameId}` },
+        (payload) => { setGame(payload.new as PartyGame) }
       )
       .subscribe()
 

@@ -2,7 +2,10 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase'
+import { joinGame } from '@/app/actions/joinGame'
+import { LOCAL_STORAGE_PLAYER_KEY } from '@/constants/game'
+
+const SESSION_TOKEN_KEY = 'pilfer_session_token'
 
 type Game = {
   id: string
@@ -21,27 +24,19 @@ export default function NameForm({ game }: { game: Game }) {
     setLoading(true)
     setError(null)
 
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from('players')
-      .insert({
-        game_id: game.id,
-        display_name: name.trim(),
-        turn_order: null,
-        turn_taken: false,
-        is_active: true,
-        joined_at: new Date().toISOString(),
-      })
-      .select()
-      .single()
+    const result = await joinGame({ display_name: name, game_id: game.id })
 
-    if (error || !data) {
-      setError(error?.message ?? 'Failed to join. Try again.')
+    if ('error' in result) {
+      const msg = typeof result.error === 'string'
+        ? result.error
+        : (result.error?.display_name?.[0] ?? 'Failed to join. Try again.')
+      setError(msg)
       setLoading(false)
       return
     }
 
-    localStorage.setItem('jamble_player_id', data.id)
+    localStorage.setItem(LOCAL_STORAGE_PLAYER_KEY, result.player_id)
+    localStorage.setItem(SESSION_TOKEN_KEY, result.session_token)
     router.push(`/game/${game.join_code}`)
   }
 
