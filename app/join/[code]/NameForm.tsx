@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase'
 import { joinGame } from '@/app/actions/joinGame'
 import { LOCAL_STORAGE_PLAYER_KEY } from '@/constants/game'
 
@@ -11,11 +12,19 @@ type Game = {
   id: string
   game_name: string
   join_code: string
+  player_limit: number | null
 }
 
-export default function NameForm({ game }: { game: Game }) {
+type Props = {
+  game: Game
+  participantCount: number
+  forceSpectator?: boolean
+}
+
+export default function NameForm({ game, participantCount, forceSpectator = false }: Props) {
   const router = useRouter()
   const [name, setName] = useState('')
+  const [role, setRole] = useState<'participant' | 'spectator'>('participant')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -24,7 +33,26 @@ export default function NameForm({ game }: { game: Game }) {
     setLoading(true)
     setError(null)
 
-    const result = await joinGame({ display_name: name, game_id: game.id })
+    const effectiveRole = forceSpectator ? 'spectator' : role
+
+    // Check participant capacity at submit time for freshest count
+    if (effectiveRole === 'participant' && game.player_limit != null) {
+      const supabase = createClient()
+      const { count } = await supabase
+        .from('players')
+        .select('*', { count: 'exact', head: true })
+        .eq('game_id', game.id)
+        .eq('role', 'participant')
+
+      if (count != null && count >= game.player_limit) {
+        setError("This game is full for gift givers — you can still join as a spectator")
+        setRole('spectator')
+        setLoading(false)
+        return
+      }
+    }
+
+    const result = await joinGame({ display_name: name, game_id: game.id, role: effectiveRole })
 
     if ('error' in result) {
       const msg = typeof result.error === 'string'
@@ -43,6 +71,7 @@ export default function NameForm({ game }: { game: Game }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-950 px-4">
       <div className="w-full max-w-sm space-y-6">
+
         <div className="text-center">
           <h1 className="text-3xl font-bold text-white">What&apos;s your name?</h1>
           <p className="mt-2 text-zinc-400">
@@ -50,7 +79,7 @@ export default function NameForm({ game }: { game: Game }) {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <input
             type="text"
             required
@@ -62,6 +91,51 @@ export default function NameForm({ game }: { game: Game }) {
             placeholder="Your name"
           />
 
+          {/* Role selection */}
+          {forceSpectator ? (
+            <div className="rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-center">
+              <p className="text-sm text-zinc-400">
+                👁 Game is in progress — joining as <span className="text-white font-semibold">spectator only</span>
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setRole('participant')}
+                className={[
+                  'flex flex-col items-center gap-2 rounded-2xl border-2 p-4 text-center transition-all',
+                  role === 'participant'
+                    ? 'border-[#B8922A] bg-[#B8922A]/10'
+                    : 'border-white/15 bg-white/5 hover:border-white/30',
+                ].join(' ')}
+              >
+                <span className="text-4xl">🎁</span>
+                <span className="font-bold text-white text-sm">I&apos;m gifting</span>
+                <span className="text-xs text-zinc-500 leading-tight">
+                  Join the game and bring a gift
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setRole('spectator')}
+                className={[
+                  'flex flex-col items-center gap-2 rounded-2xl border-2 p-4 text-center transition-all',
+                  role === 'spectator'
+                    ? 'border-white/40 bg-white/10'
+                    : 'border-white/15 bg-white/5 hover:border-white/30',
+                ].join(' ')}
+              >
+                <span className="text-4xl">👁</span>
+                <span className="font-bold text-white text-sm">I&apos;m watching</span>
+                <span className="text-xs text-zinc-500 leading-tight">
+                  Cheer everyone on — no gift needed
+                </span>
+              </button>
+            </div>
+          )}
+
           {error && <p className="text-center text-sm text-red-400">{error}</p>}
 
           <button
@@ -72,6 +146,7 @@ export default function NameForm({ game }: { game: Game }) {
             {loading ? 'Joining…' : "Let's go"}
           </button>
         </form>
+
       </div>
     </div>
   )

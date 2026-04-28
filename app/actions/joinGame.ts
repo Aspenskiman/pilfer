@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase-server'
 import { JoinGameSchema } from '@/lib/validate'
 
-export async function joinGame(formData: { display_name: string; game_id: string }) {
+export async function joinGame(formData: { display_name: string; game_id: string; role?: 'participant' | 'spectator' }) {
   const parsed = JoinGameSchema.safeParse(formData)
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors }
@@ -19,6 +19,7 @@ export async function joinGame(formData: { display_name: string; game_id: string
       display_name: parsed.data.display_name,
       session_token,
       is_active: true,
+      role: parsed.data.role,
     })
     .select('id')
     .single()

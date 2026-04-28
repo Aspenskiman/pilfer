@@ -47,6 +47,7 @@ export const CheckoutSchema = z.object({
 export const JoinGameSchema = z.object({
   display_name: DisplayNameSchema,
   game_id: z.string().uuid(),
+  role: z.enum(['participant', 'spectator']).default('participant'),
 })
 
 export const SubmitGiftSchema = z.object({

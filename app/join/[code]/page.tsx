@@ -15,35 +15,53 @@ export default async function JoinCodePage({
     .eq('join_code', code.toUpperCase())
     .single()
 
-  if (!game || game.status !== 'invited') {
+  if (!game) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-950 px-4">
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold text-white">Game not found</h1>
-          <p className="text-zinc-400">
-            Game not found or not yet open for joining. Ask your host to open the game.
-          </p>
+          <p className="text-zinc-400">This join link isn&apos;t valid.</p>
         </div>
       </div>
     )
   }
 
-  const { count } = await supabase
-    .from('players')
-    .select('*', { count: 'exact', head: true })
-    .eq('game_id', game.id)
-    .eq('is_active', true)
-
-  if (game.player_limit && count !== null && count >= game.player_limit) {
+  if (game.status === 'setup') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-950 px-4">
         <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold text-white">Game is full</h1>
-          <p className="text-zinc-400">This game has reached its player limit.</p>
+          <h1 className="text-2xl font-bold text-white">Game not open yet</h1>
+          <p className="text-zinc-400">Ask your host to open the game for joining.</p>
         </div>
       </div>
     )
   }
 
-  return <NameForm game={game} />
+  if (game.status === 'complete') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-zinc-950 px-4">
+        <div className="text-center space-y-2">
+          <h1 className="text-2xl font-bold text-white">Game has ended</h1>
+          <p className="text-zinc-400">This game is already over.</p>
+        </div>
+      </div>
+    )
+  }
+
+  // status is 'invited' or 'active' — fetch participant count
+  const { count: participantCount } = await supabase
+    .from('players')
+    .select('*', { count: 'exact', head: true })
+    .eq('game_id', game.id)
+    .eq('role', 'participant')
+
+  const forceSpectator = game.status === 'active'
+
+  return (
+    <NameForm
+      game={game}
+      participantCount={participantCount ?? 0}
+      forceSpectator={forceSpectator}
+    />
+  )
 }
