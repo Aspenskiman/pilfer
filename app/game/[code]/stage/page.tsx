@@ -8,6 +8,17 @@ import { useGameState } from '@/hooks/useGameState'
 import { usePlayers } from '@/hooks/usePlayers'
 import { useGifts } from '@/hooks/useGifts'
 import { useFeedEvents } from '@/hooks/useFeedEvents'
+import type { FeedEvent } from '@/types'
+
+function getFeedEventStyle(event: FeedEvent): string {
+  if (event.content?.includes('stole'))
+    return 'bg-yellow-900/30 border border-yellow-700/40'
+  if (event.content?.includes('opened'))
+    return 'bg-green-900/40 border border-green-700/40'
+  if (event.content?.includes('locked forever'))
+    return 'bg-red-900/40 border border-red-800/40'
+  return 'bg-white/5'
+}
 
 export default function StagePage({
   params,
@@ -334,7 +345,7 @@ export default function StagePage({
             return (
               <div
                 key={event.id}
-                className="rounded-lg bg-white/5 px-3 py-2 border border-white/5"
+                className={`rounded-lg px-3 py-2 ${getFeedEventStyle(event)}`}
               >
                 {player && (
                   <p className="text-[11px] font-semibold text-[#B8922A] mb-0.5 truncate">
