@@ -51,7 +51,10 @@ export default function GameSetupForm({ game }: { game: Game }) {
     setLoading(false)
 
     if (!res.ok) {
-      setError(data.error ?? 'Something went wrong.')
+      const errMsg = typeof data.error === 'string'
+        ? data.error
+        : 'Invalid form data. Please check your inputs.'
+      setError(errMsg)
       return
     }
 
