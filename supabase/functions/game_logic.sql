@@ -272,6 +272,11 @@ BEGIN
       is_locked      = v_now_locked
   WHERE id = p_gift_id;
 
+  -- Mark stealer's turn as consumed
+  UPDATE public.players
+  SET turn_taken = TRUE
+  WHERE id = p_actor_id;
+
   -- 8. Record action
   INSERT INTO public.actions
     (game_id, actor_id, action_type, target_gift_id, target_player_id)
