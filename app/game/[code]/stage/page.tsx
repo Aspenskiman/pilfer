@@ -218,7 +218,7 @@ export default function StagePage({
                       <img
                         src={gift.image_url}
                         alt={gift.gift_name}
-                        className="w-full h-24 object-cover"
+                        className="w-full max-h-40 object-contain bg-black/20"
                       />
                     ) : (
                       <div className="w-full h-24 bg-white/5 flex items-center justify-center px-2">
