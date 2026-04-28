@@ -1,6 +1,7 @@
 'use client'
 
 import { use, useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase'
 import { useGameState } from '@/hooks/useGameState'
 import { usePlayers } from '@/hooks/usePlayers'
@@ -22,6 +23,8 @@ export default function PlayPage({
   const [openPickerVisible, setOpenPickerVisible] = useState(false)
   const [stealSheetOpen, setStealSheetOpen] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [stealAnnouncement, setStealAnnouncement] = useState<string | null>(null)
+  const [lockAnnouncement, setLockAnnouncement] = useState<string | null>(null)
   const feedBottomRef = useRef<HTMLDivElement>(null)
 
   // Bootstrap: resolve join code → gameId
@@ -55,6 +58,19 @@ export default function PlayPage({
     const t = setTimeout(() => setErrorMsg(null), 3000)
     return () => clearTimeout(t)
   }, [errorMsg])
+
+  // Steal / lock announcements
+  const lastFeedEvent = feedEvents[feedEvents.length - 1]
+  useEffect(() => {
+    if (!lastFeedEvent || lastFeedEvent.event_type !== 'narrative') return
+    if (lastFeedEvent.content?.includes('stole')) {
+      setStealAnnouncement(lastFeedEvent.content)
+      setTimeout(() => setStealAnnouncement(null), 4000)
+    } else if (lastFeedEvent.content?.includes('locked forever')) {
+      setLockAnnouncement(lastFeedEvent.content)
+      setTimeout(() => setLockAnnouncement(null), 4000)
+    }
+  }, [lastFeedEvent?.id])
 
   const currentTurnPlayer = players.find((p) => p.id === game?.current_turn_player_id) ?? null
   const isMyTurn = !!currentPlayer && currentPlayer.id === currentTurnPlayer?.id
@@ -126,6 +142,34 @@ export default function PlayPage({
             {errorMsg}
           </div>
         )}
+
+        {/* Steal / lock announcement overlay */}
+        <AnimatePresence>
+          {(stealAnnouncement || lockAnnouncement) && (
+            <motion.div
+              key={stealAnnouncement ? 'steal' : 'lock'}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.1 }}
+              transition={{ duration: 0.3 }}
+              className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+            >
+              {stealAnnouncement ? (
+                <div className="bg-[#7A1F2E] rounded-3xl px-12 py-10 text-center shadow-2xl max-w-lg mx-4">
+                  <div className="text-6xl mb-4">🎁💨</div>
+                  <div className="text-4xl font-bold text-white mb-3">PILFER!</div>
+                  <div className="text-white/90 text-lg leading-snug">{stealAnnouncement}</div>
+                </div>
+              ) : (
+                <div className="bg-[#B8922A] rounded-3xl px-12 py-10 text-center shadow-2xl max-w-lg mx-4">
+                  <div className="text-6xl mb-4">🔒</div>
+                  <div className="text-4xl font-bold text-white mb-3">LOCKED!</div>
+                  <div className="text-white/90 text-lg">{lockAnnouncement}</div>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <p className="text-6xl font-black text-white tracking-tight text-center leading-none">
           YOUR<br />TURN
@@ -281,6 +325,34 @@ export default function PlayPage({
           {errorMsg}
         </div>
       )}
+
+      {/* Steal / lock announcement overlay */}
+      <AnimatePresence>
+        {(stealAnnouncement || lockAnnouncement) && (
+          <motion.div
+            key={stealAnnouncement ? 'steal' : 'lock'}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.1 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+          >
+            {stealAnnouncement ? (
+              <div className="bg-[#7A1F2E] rounded-3xl px-12 py-10 text-center shadow-2xl max-w-lg mx-4">
+                <div className="text-6xl mb-4">🎁💨</div>
+                <div className="text-4xl font-bold text-white mb-3">PILFER!</div>
+                <div className="text-white/90 text-lg leading-snug">{stealAnnouncement}</div>
+              </div>
+            ) : (
+              <div className="bg-[#B8922A] rounded-3xl px-12 py-10 text-center shadow-2xl max-w-lg mx-4">
+                <div className="text-6xl mb-4">🔒</div>
+                <div className="text-4xl font-bold text-white mb-3">LOCKED!</div>
+                <div className="text-white/90 text-lg">{lockAnnouncement}</div>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Sticky top bar */}
       <div className="sticky top-0 z-10 bg-[#1A2B4A] border-b border-white/10 px-4 py-3 flex items-center justify-between shrink-0">
