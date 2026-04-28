@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase-server'
 import { notFound } from 'next/navigation'
+import GameActions from './GameActions'
 
 export default async function GamePage({
   params,
@@ -49,6 +50,12 @@ export default async function GamePage({
             </div>
           )}
         </div>
+
+        <GameActions
+          gameId={game.id}
+          joinCode={game.join_code}
+          status={game.status}
+        />
       </div>
     </div>
   )

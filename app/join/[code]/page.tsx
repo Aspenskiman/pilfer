@@ -21,7 +21,7 @@ export default async function JoinCodePage({
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold text-white">Game not found</h1>
           <p className="text-zinc-400">
-            That join code doesn&apos;t match an active game.
+            Game not found or not yet open for joining. Ask your host to open the game.
           </p>
         </div>
       </div>
