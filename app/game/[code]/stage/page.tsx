@@ -10,14 +10,14 @@ import { useGifts } from '@/hooks/useGifts'
 import { useFeedEvents } from '@/hooks/useFeedEvents'
 import type { FeedEvent } from '@/types'
 
-function getFeedEventStyle(event: FeedEvent): string {
+function getFeedEventStyle(event: FeedEvent): React.CSSProperties {
   if (event.content?.includes('stole'))
-    return 'bg-yellow-900/30 border border-yellow-700/40'
+    return { backgroundColor: 'rgba(184, 146, 42, 0.2)', border: '1px solid rgba(184, 146, 42, 0.4)' }
   if (event.content?.includes('opened'))
-    return 'bg-green-900/40 border border-green-700/40'
+    return { backgroundColor: 'rgba(20, 83, 45, 0.4)', border: '1px solid rgba(34, 197, 94, 0.3)' }
   if (event.content?.includes('locked forever'))
-    return 'bg-red-900/40 border border-red-800/40'
-  return 'bg-white/5'
+    return { backgroundColor: 'rgba(122, 31, 46, 0.4)', border: '1px solid rgba(122, 31, 46, 0.6)' }
+  return { backgroundColor: 'rgba(255, 255, 255, 0.05)' }
 }
 
 export default function StagePage({
@@ -345,7 +345,8 @@ export default function StagePage({
             return (
               <div
                 key={event.id}
-                className={`rounded-lg px-3 py-2 ${getFeedEventStyle(event)}`}
+                className="rounded-lg p-3 space-y-0.5"
+                style={getFeedEventStyle(event)}
               >
                 {player && (
                   <p className="text-[11px] font-semibold text-[#B8922A] mb-0.5 truncate">
