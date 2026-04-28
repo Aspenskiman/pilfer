@@ -17,43 +17,26 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  v_game               public.party_games%ROWTYPE;
-  v_current_order      INT;
-  v_advance_from_order INT;
-  v_next_player        public.players%ROWTYPE;
-  v_wrapped_count      INT;
+  v_game          public.party_games%ROWTYPE;
+  v_next_player   public.players%ROWTYPE;
+  v_wrapped_count INT;
 BEGIN
   -- 1. Fetch current game row
   SELECT * INTO v_game
   FROM public.party_games
   WHERE id = p_game_id;
 
-  -- 2. Get current player's turn_order (the revenge player)
-  SELECT turn_order INTO v_current_order
-  FROM public.players
-  WHERE id = v_game.current_turn_player_id;
-
-  -- 3. If last_stealer_id is set, we just completed a revenge turn.
-  --    Advance from the stealer's turn_order instead of the revenge player's.
-  IF v_game.last_stealer_id IS NOT NULL THEN
-    SELECT turn_order INTO v_advance_from_order
-    FROM public.players
-    WHERE id = v_game.last_stealer_id;
-  ELSE
-    v_advance_from_order := v_current_order;
-  END IF;
-
-  -- 4. Find next participant with a higher turn_order than advance_from_order
+  -- 2. Find next participant where turn not yet taken
   SELECT * INTO v_next_player
   FROM public.players
   WHERE game_id    = p_game_id
     AND role       = 'participant'
-    AND turn_order > v_advance_from_order
+    AND turn_taken = FALSE
   ORDER BY turn_order ASC
   LIMIT 1;
 
   IF FOUND THEN
-    -- 5. Advance to next player — clear both steal tracking fields
+    -- 3. Advance to next player — clear steal tracking fields
     UPDATE public.party_games
     SET current_turn_player_id = v_next_player.id,
         last_stolen_from_id    = NULL,
@@ -61,7 +44,7 @@ BEGIN
     WHERE id = p_game_id;
 
   ELSE
-    -- 6. No next player — check for remaining wrapped gifts
+    -- 4. No next player — check for remaining wrapped gifts
     SELECT COUNT(*) INTO v_wrapped_count
     FROM public.gifts
     WHERE game_id   = p_game_id
@@ -160,6 +143,11 @@ BEGIN
   SET is_opened      = TRUE,
       current_holder = p_player_id
   WHERE id = p_gift_id;
+
+  -- Mark current player's turn as consumed
+  UPDATE public.players
+  SET turn_taken = TRUE
+  WHERE id = p_player_id;
 
   -- 8. Record action
   INSERT INTO public.actions (game_id, actor_id, action_type, target_gift_id)
