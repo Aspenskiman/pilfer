@@ -17,59 +17,69 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  v_game          public.party_games%ROWTYPE;
-  v_current_order INT;
-  v_next_player   public.players%ROWTYPE;
-  v_wrapped_count INT;
+  v_game               public.party_games%ROWTYPE;
+  v_current_order      INT;
+  v_advance_from_order INT;
+  v_next_player        public.players%ROWTYPE;
+  v_wrapped_count      INT;
 BEGIN
   -- 1. Fetch current game row
   SELECT * INTO v_game
   FROM public.party_games
   WHERE id = p_game_id;
 
-  -- 2. Get current player's turn_order
+  -- 2. Get current player's turn_order (the revenge player)
   SELECT turn_order INTO v_current_order
   FROM public.players
   WHERE id = v_game.current_turn_player_id;
 
-  -- 3. Find next participant with a higher turn_order
+  -- 3. If last_stealer_id is set, we just completed a revenge turn.
+  --    Advance from the stealer's turn_order instead of the revenge player's.
+  IF v_game.last_stealer_id IS NOT NULL THEN
+    SELECT turn_order INTO v_advance_from_order
+    FROM public.players
+    WHERE id = v_game.last_stealer_id;
+  ELSE
+    v_advance_from_order := v_current_order;
+  END IF;
+
+  -- 4. Find next participant with a higher turn_order than advance_from_order
   SELECT * INTO v_next_player
   FROM public.players
   WHERE game_id    = p_game_id
     AND role       = 'participant'
-    AND turn_order > v_current_order
+    AND turn_order > v_advance_from_order
   ORDER BY turn_order ASC
   LIMIT 1;
 
   IF FOUND THEN
-    -- 4. Advance to next player
+    -- 5. Advance to next player — clear both steal tracking fields
     UPDATE public.party_games
     SET current_turn_player_id = v_next_player.id,
-        last_stolen_from_id    = NULL
+        last_stolen_from_id    = NULL,
+        last_stealer_id        = NULL
     WHERE id = p_game_id;
 
   ELSE
-    -- 5. No next player — check for remaining wrapped gifts
+    -- 6. No next player — check for remaining wrapped gifts
     SELECT COUNT(*) INTO v_wrapped_count
     FROM public.gifts
     WHERE game_id   = p_game_id
       AND is_opened = FALSE;
 
     IF v_wrapped_count > 0 THEN
-      -- Shouldn't happen — log as a feed event so host can see
       INSERT INTO public.feed_events (game_id, event_type, content)
       VALUES (
         p_game_id,
         'narrative',
         '[ERROR] Turn advance reached end of player list but wrapped gifts remain.'
       );
-
     ELSE
-      -- No next player and no wrapped gifts — game over
       UPDATE public.party_games
       SET status                 = 'complete',
           current_turn_player_id = NULL,
-          last_stolen_from_id    = NULL
+          last_stolen_from_id    = NULL,
+          last_stealer_id        = NULL
       WHERE id = p_game_id;
 
       INSERT INTO public.feed_events (game_id, event_type, content)
@@ -303,7 +313,8 @@ BEGIN
   -- 11. Revenge turn — stolen-from player goes next
   UPDATE public.party_games
   SET current_turn_player_id = v_previous_holder,
-      last_stolen_from_id    = v_previous_holder
+      last_stolen_from_id    = v_previous_holder,
+      last_stealer_id        = p_actor_id
   WHERE id = p_game_id;
 
   RETURN jsonb_build_object('success', true);

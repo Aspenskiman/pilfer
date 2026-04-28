@@ -24,6 +24,9 @@ ALTER TABLE public.party_games
 ALTER TABLE public.party_games
   ADD COLUMN IF NOT EXISTS last_stolen_from_id     UUID REFERENCES public.players(id);
 
+ALTER TABLE public.party_games
+  ADD COLUMN IF NOT EXISTS last_stealer_id         UUID REFERENCES public.players(id);
+
 
 -- ── c. Add missing columns to players ────────────────────────
 ALTER TABLE public.players
