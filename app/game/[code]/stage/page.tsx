@@ -148,15 +148,12 @@ export default function StagePage({
                 {wrappedGifts.map((gift) => (
                   <div
                     key={gift.id}
-                    className="relative w-28 h-28 rounded-xl bg-white/8 border border-white/15 flex flex-col items-center justify-center p-2 select-none"
+                    className="relative w-28 h-28 rounded-xl bg-white/8 border border-white/15 flex items-center justify-center select-none"
                   >
                     {gift.is_locked && (
                       <span className="absolute top-1.5 right-1.5 text-xs">🔒</span>
                     )}
                     <span className="text-3xl">🎁</span>
-                    <span className="mt-1.5 text-[11px] text-white/60 text-center leading-tight line-clamp-2 w-full px-1">
-                      {gift.gift_name}
-                    </span>
                   </div>
                 ))}
               </div>
@@ -178,12 +175,18 @@ export default function StagePage({
                     {gift.is_locked && (
                       <span className="absolute top-1.5 right-1.5 text-sm z-10">🔒</span>
                     )}
-                    {gift.image_url && (
+                    {gift.image_url ? (
                       <img
                         src={gift.image_url}
                         alt={gift.gift_name}
                         className="w-full h-24 object-cover"
                       />
+                    ) : (
+                      <div className="w-full h-24 bg-white/5 flex items-center justify-center px-2">
+                        <p className="text-xs text-white/40 text-center leading-tight line-clamp-3">
+                          {gift.gift_name}
+                        </p>
+                      </div>
                     )}
                     <div className="p-2.5">
                       <p className="text-xs font-semibold truncate">{gift.gift_name}</p>

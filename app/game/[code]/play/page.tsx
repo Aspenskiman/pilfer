@@ -183,13 +183,16 @@ export default function PlayPage({
 
           {/* STEAL A GIFT */}
           {currentPlayer.role !== 'spectator' && (
-            <button
-              disabled={!isMyTurn}
-              onClick={() => setStealSheetOpen(true)}
-              className="min-h-16 w-full rounded-2xl border-2 border-white text-white font-bold text-xl active:scale-95 transition-transform disabled:opacity-50"
-            >
-              STEAL A GIFT
-            </button>
+            stealableGifts.length > 0 ? (
+              <button
+                onClick={() => setStealSheetOpen(true)}
+                className="min-h-16 w-full rounded-2xl border-2 border-white text-white font-bold text-xl active:scale-95 transition-transform"
+              >
+                STEAL A GIFT
+              </button>
+            ) : (
+              <p className="text-white/50 text-sm text-center">No gifts to steal yet</p>
+            )
           )}
 
         </div>
