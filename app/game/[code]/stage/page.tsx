@@ -56,6 +56,11 @@ export default function StagePage({
     return () => clearTimeout(t)
   }, [errorMsg])
 
+  const game = useGameState(gameId)
+  const players = usePlayers(gameId)
+  const gifts = useGifts(gameId)
+  const feedEvents = useFeedEvents(gameId)
+
   // Steal / lock announcements
   const lastFeedEvent = feedEvents[feedEvents.length - 1]
   useEffect(() => {
@@ -68,11 +73,6 @@ export default function StagePage({
       setTimeout(() => setLockAnnouncement(null), 4000)
     }
   }, [lastFeedEvent?.id])
-
-  const game = useGameState(gameId)
-  const players = usePlayers(gameId)
-  const gifts = useGifts(gameId)
-  const feedEvents = useFeedEvents(gameId)
 
   // Redirect to recap when game ends
   useEffect(() => {
