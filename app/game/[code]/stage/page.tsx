@@ -17,21 +17,30 @@ export default function StagePage({
   const router = useRouter()
 
   const [gameId, setGameId] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const feedBottomRef = useRef<HTMLDivElement>(null)
 
-  // Bootstrap: resolve join code → gameId
+  // Bootstrap: resolve join code → gameId, get current user
   useEffect(() => {
     const supabase = createClient()
     async function bootstrap() {
-      const { data } = await supabase
-        .from('party_games')
-        .select('id')
-        .eq('join_code', code.toUpperCase())
-        .single()
+      const [{ data }, { data: { user } }] = await Promise.all([
+        supabase.from('party_games').select('id').eq('join_code', code.toUpperCase()).single(),
+        supabase.auth.getUser(),
+      ])
       if (data) setGameId(data.id)
+      if (user) setUserId(user.id)
     }
     bootstrap()
   }, [code])
+
+  // Auto-dismiss error toast
+  useEffect(() => {
+    if (!errorMsg) return
+    const t = setTimeout(() => setErrorMsg(null), 3000)
+    return () => clearTimeout(t)
+  }, [errorMsg])
 
   const game = useGameState(gameId)
   const players = usePlayers(gameId)
@@ -60,6 +69,21 @@ export default function StagePage({
   const wrappedGifts = gifts.filter((g) => !g.is_opened)
   const openedGifts = gifts.filter((g) => g.is_opened)
 
+  const isHost = !!userId && !!game && userId === game.host_id
+
+  async function openGiftForPlayer(giftId: string) {
+    if (!game?.current_turn_player_id) return
+    const supabase = createClient()
+    const { data, error } = await supabase.rpc('pilfer_open_gift', {
+      p_game_id: game.id,
+      p_player_id: game.current_turn_player_id,
+      p_gift_id: giftId,
+    })
+    if (error || !data?.success) {
+      setErrorMsg(data?.error ?? 'Something went wrong')
+    }
+  }
+
   // Waiting / loading states
   if (!game || game.status !== 'active') {
     return (
@@ -71,6 +95,13 @@ export default function StagePage({
 
   return (
     <div className="flex h-screen bg-[#1A2B4A] text-white overflow-hidden">
+
+      {/* Error toast */}
+      {errorMsg && (
+        <div className="fixed top-4 inset-x-4 bg-red-600 text-white rounded-xl px-4 py-3 text-sm font-medium z-50 shadow-lg">
+          {errorMsg}
+        </div>
+      )}
 
       {/* ── LEFT COLUMN — Players ──────────────────────────────── */}
       <div className="w-1/5 border-r border-white/10 flex flex-col min-w-0">
@@ -152,15 +183,16 @@ export default function StagePage({
                 Wrapped — {wrappedGifts.length}
               </h3>
               <div className="flex flex-wrap gap-3">
-                {wrappedGifts.map((gift) => (
+                {wrappedGifts.map((gift, index) => (
                   <div
                     key={gift.id}
-                    className="relative w-28 h-28 rounded-xl bg-white/8 border border-white/15 flex items-center justify-center select-none"
+                    className="relative w-28 h-28 rounded-xl bg-white/8 border border-white/15 flex flex-col items-center justify-center select-none"
                   >
                     {gift.is_locked && (
                       <span className="absolute top-1.5 right-1.5 text-xs">🔒</span>
                     )}
                     <span className="text-3xl">🎁</span>
+                    <span className="text-[11px] text-white/50 mt-1">Gift {index + 1}</span>
                   </div>
                 ))}
               </div>
@@ -213,6 +245,33 @@ export default function StagePage({
             <p className="text-center text-white/20 text-sm pt-12">
               No gifts yet.
             </p>
+          )}
+
+          {/* Host Controls */}
+          {isHost && wrappedGifts.length > 0 && currentTurnPlayer && (
+            <section className="border-t border-white/10 pt-6">
+              <h3 className="text-xs font-semibold uppercase tracking-widest text-[#B8922A] mb-1">
+                Host Controls
+              </h3>
+              <p className="text-xs text-white/40 mb-3">
+                Open a gift on behalf of the current player
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {wrappedGifts.map((gift, index) => (
+                  <button
+                    key={gift.id}
+                    onClick={() => openGiftForPlayer(gift.id)}
+                    className="flex flex-col items-center justify-center w-28 rounded-xl bg-white/5 border border-white/10 p-3 hover:bg-white/10 active:scale-95 transition-all"
+                  >
+                    <span className="text-2xl">🎁</span>
+                    <span className="text-[11px] text-white/50 mt-1">Gift {index + 1}</span>
+                    <span className="text-[10px] text-[#B8922A] mt-1 text-center leading-tight">
+                      Open for {currentTurnPlayer.display_name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
           )}
         </div>
       </div>
