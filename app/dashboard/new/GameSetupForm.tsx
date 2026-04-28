@@ -41,7 +41,7 @@ export default function GameSetupForm({ game }: { game: Game }) {
       body: JSON.stringify({
         game_id: game.id,
         game_name: gameName,
-        game_date: gameDate,
+        game_date: new Date(gameDate).toISOString(),
         theme,
         video_url: videoUrl || null,
       }),

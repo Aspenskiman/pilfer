@@ -34,7 +34,7 @@ export const ImageUrlSchema = z.string()
 export const UpdateGameSchema = z.object({
   game_id: z.string().uuid(),
   game_name: GameNameSchema,
-  game_date: z.string().datetime({ offset: true }),
+  game_date: z.string().min(1, 'Party date and time is required'),
   theme: z.enum(['winter', 'birthday', 'shower', 'team', 'fall', 'fun', 'summer', 'celebrate']),
   video_url: z.string().url().max(500).optional().or(z.literal('')),
 })

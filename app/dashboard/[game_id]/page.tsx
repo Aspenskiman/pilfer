@@ -45,7 +45,14 @@ export default async function GamePage({
             <div>
               <p className="text-sm text-zinc-400">Scheduled for</p>
               <p className="mt-1 text-white">
-                {new Date(game.game_date).toLocaleString()}
+                {new Date(game.game_date).toLocaleString(undefined, {
+                  weekday: 'long',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: true,
+                })}
               </p>
             </div>
           )}
