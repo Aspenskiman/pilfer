@@ -22,6 +22,8 @@ export type PartyGame = {
   current_turn_player_id: string | null
   round_number: number | null
   last_stolen_from_id: string | null
+  last_stealer_id: string | null
+  recap_unlocked: boolean
   created_at: string
 }
 

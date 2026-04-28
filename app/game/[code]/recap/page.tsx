@@ -18,19 +18,25 @@ export default function RecapPage({
   const [actions, setActions] = useState<Action[]>([])
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
+  const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
+
+  useEffect(() => {
+    setCurrentPlayerId(localStorage.getItem('pilfer_player_id'))
+  }, [])
 
   useEffect(() => {
     const supabase = createClient()
 
     async function fetchAll() {
-      const { data: gameData } = await supabase
-        .from('party_games')
-        .select('*')
-        .eq('join_code', code.toUpperCase())
-        .single()
+      const [{ data: gameData }, { data: { user } }] = await Promise.all([
+        supabase.from('party_games').select('*').eq('join_code', code.toUpperCase()).single(),
+        supabase.auth.getUser(),
+      ])
 
       if (!gameData) { setLoading(false); return }
       setGame(gameData)
+      setUserId(user?.id ?? null)
 
       const [playersRes, giftsRes, actionsRes] = await Promise.all([
         supabase.from('players').select('*').eq('game_id', gameData.id),
@@ -77,6 +83,14 @@ export default function RecapPage({
   // Player breakdown
   const participants = players.filter((p) => p.role === 'participant')
   const spectators = players.filter((p) => p.role === 'spectator')
+
+  // ── Gift Exchange derivations ────────────────────────────────
+  const isHost = !!userId && !!game && userId === game.host_id
+  const myWonGift = gifts.find((g) => g.current_holder === currentPlayerId) ?? null
+  const mySubmittedGift = gifts.find((g) => g.submitted_by === currentPlayerId) ?? null
+  const mySubmittedGiftWinner = mySubmittedGift
+    ? players.find((p) => p.id === mySubmittedGift.current_holder) ?? null
+    : null
 
   // ── Copy link ────────────────────────────────────────────────
   async function handleCopyLink() {
@@ -231,6 +245,104 @@ export default function RecapPage({
             )}
           </div>
 
+        </div>
+
+        {/* ── Gift Exchange ──────────────────────────────────── */}
+        <div className="space-y-4">
+          <h2
+            className="text-white text-xl font-bold"
+            style={{ fontFamily: 'var(--font-playfair)' }}
+          >
+            Gift Exchange
+          </h2>
+
+          {/* Player view */}
+          {currentPlayerId && !isHost && (
+            <div className="space-y-3">
+
+              {/* Gift you won */}
+              {myWonGift ? (
+                <div className="rounded-xl border border-[#B8922A] bg-white/5 overflow-hidden">
+                  {myWonGift.image_url && (
+                    <img
+                      src={myWonGift.image_url}
+                      alt={myWonGift.gift_name}
+                      className="w-full max-h-48 object-contain bg-black/20"
+                    />
+                  )}
+                  <div className="p-4 space-y-3">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-[#B8922A]">
+                      🎁 You won this gift
+                    </p>
+                    <p className="text-white font-bold text-lg leading-tight">
+                      {myWonGift.gift_name}
+                    </p>
+                    {myWonGift.delivery_info && (
+                      <div className="rounded-lg bg-[#B8922A]/20 border border-[#B8922A]/40 px-4 py-3">
+                        <p className="text-xs font-semibold text-[#B8922A] mb-1">
+                          How to claim
+                        </p>
+                        <p className="text-white/90 text-sm leading-snug">
+                          {myWonGift.delivery_info}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-white/40 text-sm">You didn&apos;t end up with a gift.</p>
+                </div>
+              )}
+
+              {/* Gift you submitted */}
+              {mySubmittedGift && (
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-white/40">
+                    Your gift was won by
+                  </p>
+                  <p className="text-white font-bold">
+                    {mySubmittedGiftWinner?.display_name ?? '—'}
+                  </p>
+                  <p className="text-white/50 text-sm">{mySubmittedGift.gift_name}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Host view — full table */}
+          {isHost && (
+            <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
+              <div className="divide-y divide-white/5">
+                {gifts.map((gift) => {
+                  const submitter = players.find((p) => p.id === gift.submitted_by)
+                  const winner = players.find((p) => p.id === gift.current_holder)
+                  return (
+                    <div key={gift.id} className="px-4 py-4 space-y-2">
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="text-white font-semibold text-sm leading-tight">
+                          {gift.gift_name}
+                        </p>
+                        {gift.is_locked && (
+                          <span className="text-xs shrink-0">🔒</span>
+                        )}
+                      </div>
+                      <div className="flex gap-4 text-xs text-white/50">
+                        <span>From: <span className="text-white/70">{submitter?.display_name ?? '—'}</span></span>
+                        <span>Won by: <span className="text-white/70">{winner?.display_name ?? '—'}</span></span>
+                      </div>
+                      {gift.delivery_info && (
+                        <div className="rounded-lg bg-[#B8922A]/15 border border-[#B8922A]/30 px-3 py-2">
+                          <p className="text-xs text-[#B8922A] font-semibold mb-0.5">Delivery info</p>
+                          <p className="text-white/80 text-xs leading-snug">{gift.delivery_info}</p>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ── Share ──────────────────────────────────────────── */}

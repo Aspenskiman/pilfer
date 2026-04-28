@@ -1,6 +1,7 @@
 'use client'
 
 import { use, useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase'
 import { useGameState } from '@/hooks/useGameState'
@@ -29,6 +30,7 @@ export default function PlayPage({
   params: Promise<{ code: string }>
 }) {
   const { code } = use(params)
+  const router = useRouter()
 
   const [gameId, setGameId] = useState<string | null>(null)
   const [openPickerVisible, setOpenPickerVisible] = useState(false)
@@ -82,6 +84,13 @@ export default function PlayPage({
       setTimeout(() => setLockAnnouncement(null), 4000)
     }
   }, [lastFeedEvent?.id])
+
+  // Redirect to recap when host unlocks it
+  useEffect(() => {
+    if (game?.recap_unlocked) {
+      router.push(`/game/${code}/recap`)
+    }
+  }, [game?.recap_unlocked]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const currentTurnPlayer = players.find((p) => p.id === game?.current_turn_player_id) ?? null
   const isMyTurn = !!currentPlayer && currentPlayer.id === currentTurnPlayer?.id
@@ -366,24 +375,32 @@ export default function PlayPage({
       </AnimatePresence>
 
       {/* Sticky top bar */}
-      <div className="sticky top-0 z-10 bg-[#1A2B4A] border-b border-white/10 px-4 py-3 flex items-center justify-between shrink-0">
-        <p className="text-sm font-medium text-white/70">
-          {currentTurnPlayer ? (
-            <>
-              It&apos;s{' '}
-              <span className="text-white font-semibold">{currentTurnPlayer.display_name}</span>
-              &apos;s turn
-            </>
-          ) : (
-            <span className="text-white/40">Waiting for game to start…</span>
+      {game?.status === 'complete' ? (
+        <div className="sticky top-0 z-10 bg-[#1A2B4A] border-b border-white/10 px-4 py-3 shrink-0">
+          <p className="text-sm font-semibold text-white text-center">
+            🎉 Game Over! Keep chatting — host will end the game shortly
+          </p>
+        </div>
+      ) : (
+        <div className="sticky top-0 z-10 bg-[#1A2B4A] border-b border-white/10 px-4 py-3 flex items-center justify-between shrink-0">
+          <p className="text-sm font-medium text-white/70">
+            {currentTurnPlayer ? (
+              <>
+                It&apos;s{' '}
+                <span className="text-white font-semibold">{currentTurnPlayer.display_name}</span>
+                &apos;s turn
+              </>
+            ) : (
+              <span className="text-white/40">Waiting for game to start…</span>
+            )}
+          </p>
+          {isSpectator && (
+            <span className="text-xs bg-white/10 rounded-full px-3 py-1 font-medium">
+              👁 Spectating
+            </span>
           )}
-        </p>
-        {isSpectator && (
-          <span className="text-xs bg-white/10 rounded-full px-3 py-1 font-medium">
-            👁 Spectating
-          </span>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Gift holder — hidden for spectators */}
       {!isSpectator && (

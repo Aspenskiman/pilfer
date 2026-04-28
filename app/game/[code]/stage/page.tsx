@@ -75,12 +75,12 @@ export default function StagePage({
     }
   }, [lastFeedEvent?.id])
 
-  // Redirect to recap when game ends
+  // Redirect to recap when host unlocks it
   useEffect(() => {
-    if (game?.status === 'complete') {
+    if (game?.recap_unlocked) {
       router.push(`/game/${code}/recap`)
     }
-  }, [game?.status]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [game?.recap_unlocked]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-scroll feed to bottom on new events
   useEffect(() => {
@@ -133,8 +133,57 @@ export default function StagePage({
     }
   }
 
-  // Waiting / loading states
-  if (!game || game.status !== 'active') {
+  async function endGame() {
+    if (!game) return
+    const res = await fetch('/api/games/end', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game_id: game.id }),
+    })
+    if (res.ok) {
+      router.push(`/game/${code}/recap`)
+    }
+  }
+
+  // Loading state
+  if (!game) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#1A2B4A]">
+        <p className="text-white/60 text-lg">Loading…</p>
+      </div>
+    )
+  }
+
+  // Game over banner
+  if (game.status === 'complete') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#1A2B4A] px-4">
+        <div className="text-center space-y-6 max-w-sm w-full">
+          <div className="text-6xl">🎉</div>
+          <h1
+            className="text-4xl font-bold text-[#B8922A] tracking-tight"
+            style={{ fontFamily: 'var(--font-playfair)' }}
+          >
+            Game Over!
+          </h1>
+          <p className="text-white/60 text-lg">{game.game_name}</p>
+          {isHost ? (
+            <button
+              onClick={endGame}
+              className="w-full min-h-14 rounded-2xl bg-[#B8922A] text-white font-bold text-xl hover:opacity-90 active:scale-95 transition-all"
+            >
+              End Game
+            </button>
+          ) : (
+            <p className="text-white/40 text-sm">Waiting for host to end the game…</p>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Waiting / pre-game state
+  if (game.status !== 'active') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#1A2B4A]">
         <p className="text-white/60 text-lg">Waiting for host to start the game…</p>
