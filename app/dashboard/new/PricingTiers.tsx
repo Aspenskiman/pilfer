@@ -52,7 +52,34 @@ export default function PricingTiers() {
 
   async function handleSelect(tierId: string) {
     if (tierId === 'free') {
-      router.push('/dashboard')
+      if (!gameName.trim()) {
+        setError('Please enter a game name before continuing.')
+        return
+      }
+      setLoading('free')
+      setError(null)
+
+      const res = await fetch('/api/games/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          game_name: gameName.trim(),
+          tier: 'free',
+        }),
+      })
+
+      const data = await res.json()
+      setLoading(null)
+
+      if (!res.ok) {
+        const errMsg = typeof data.error === 'string'
+          ? data.error
+          : 'Failed to create game. Please try again.'
+        setError(errMsg)
+        return
+      }
+
+      router.push(`/dashboard/${data.game_id}`)
       return
     }
 
