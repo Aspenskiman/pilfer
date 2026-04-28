@@ -8,6 +8,17 @@ import { usePlayers } from '@/hooks/usePlayers'
 import { useGifts } from '@/hooks/useGifts'
 import { useFeedEvents } from '@/hooks/useFeedEvents'
 import { useCurrentPlayer } from '@/hooks/useCurrentPlayer'
+import type { FeedEvent } from '@/types'
+
+function getFeedEventStyle(event: FeedEvent): React.CSSProperties {
+  if (event.content?.includes('stole'))
+    return { backgroundColor: 'rgba(184, 146, 42, 0.5)', border: '1px solid rgba(184, 146, 42, 0.8)' }
+  if (event.content?.includes('opened'))
+    return { backgroundColor: 'rgba(20, 83, 45, 0.4)', border: '1px solid rgba(34, 197, 94, 0.3)' }
+  if (event.content?.includes('locked forever'))
+    return { backgroundColor: 'rgba(122, 31, 46, 0.4)', border: '1px solid rgba(122, 31, 46, 0.6)' }
+  return { backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.05)' }
+}
 
 const EMOJIS = ['🎁', '😱', '😂', '🔥', '👀', '💀'] as const
 const TAUNTS = ["Bold move...", "You won't steal mine 😤", "Classic."] as const
@@ -414,7 +425,8 @@ export default function PlayPage({
           return (
             <div
               key={event.id}
-              className="rounded-xl bg-white/5 border border-white/5 px-3 py-2"
+              className="rounded-xl px-3 py-2"
+              style={getFeedEventStyle(event)}
             >
               {player && (
                 <p className="text-xs font-semibold text-[#B8922A] mb-0.5">
