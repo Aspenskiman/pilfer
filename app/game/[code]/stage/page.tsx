@@ -87,6 +87,11 @@ export default function StagePage({
     feedBottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [feedEvents])
 
+  // Reset host action overlay when the active player changes
+  useEffect(() => {
+    setHostActionMode(null)
+  }, [game?.current_turn_player_id])
+
   const currentTurnPlayer = players.find((p) => p.id === game?.current_turn_player_id) ?? null
   const onDeckPlayer =
     players
