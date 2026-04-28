@@ -156,21 +156,11 @@ export default function PlayPage({
                         <button
                           key={gift.id}
                           onClick={() => { openGift(gift.id); setOpenPickerVisible(false) }}
-                          className="flex flex-col items-center rounded-xl bg-white/90 p-2 active:scale-95 transition-transform"
+                          className="flex flex-col items-center justify-center rounded-xl bg-white/90 p-4 active:scale-95 transition-transform"
                         >
-                          {gift.image_url ? (
-                            <img
-                              src={gift.image_url}
-                              alt={gift.gift_name}
-                              className="w-full h-20 object-cover rounded-lg mb-1.5"
-                            />
-                          ) : (
-                            <div className="w-full h-20 rounded-lg bg-[#1A2B4A]/10 flex items-center justify-center mb-1.5">
-                              <span className="text-3xl">🎁</span>
-                            </div>
-                          )}
-                          <p className="text-xs font-semibold text-[#1A2B4A] text-center line-clamp-2 leading-tight">
-                            {gift.gift_name}
+                          <span className="text-4xl">🎁</span>
+                          <p className="mt-1.5 text-xs text-[#1A2B4A]/50 font-medium">
+                            Mystery Gift
                           </p>
                         </button>
                       ))}
