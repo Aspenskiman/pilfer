@@ -78,7 +78,14 @@ export default function StagePage({
           Players
         </h2>
         <ul className="flex-1 overflow-y-auto divide-y divide-white/5">
-          {players.map((player) => {
+          {[...players]
+            .sort((a, b) => {
+              if (a.turn_order == null && b.turn_order == null) return 0
+              if (a.turn_order == null) return 1
+              if (b.turn_order == null) return -1
+              return a.turn_order - b.turn_order
+            })
+            .map((player) => {
             const isCurrent = player.id === game.current_turn_player_id
             const hasGift = holderIds.has(player.id)
             return (
