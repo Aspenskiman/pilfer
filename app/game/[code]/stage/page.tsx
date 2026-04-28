@@ -12,7 +12,7 @@ import type { FeedEvent } from '@/types'
 
 function getFeedEventStyle(event: FeedEvent): React.CSSProperties {
   if (event.content?.includes('stole'))
-    return { backgroundColor: 'rgba(184, 146, 42, 0.2)', border: '1px solid rgba(184, 146, 42, 0.4)' }
+    return { backgroundColor: 'rgba(184, 146, 42, 0.5)', border: '1px solid rgba(184, 146, 42, 0.8)' }
   if (event.content?.includes('opened'))
     return { backgroundColor: 'rgba(20, 83, 45, 0.4)', border: '1px solid rgba(34, 197, 94, 0.3)' }
   if (event.content?.includes('locked forever'))
