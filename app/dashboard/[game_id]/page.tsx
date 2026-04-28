@@ -12,7 +12,7 @@ export default async function GamePage({
 
   const { data: game } = await supabase
     .from('party_games')
-    .select('id, game_name, join_code, status, game_date')
+    .select('id, game_name, join_code, status, game_date, theme')
     .eq('id', game_id)
     .single()
 
@@ -41,27 +41,30 @@ export default async function GamePage({
             </span>
           </div>
 
-          {game.game_date && (
-            <div>
-              <p className="text-sm text-zinc-400">Scheduled for</p>
-              <p className="mt-1 text-white">
-                {new Date(game.game_date).toLocaleString(undefined, {
-                  weekday: 'long',
-                  month: 'long',
-                  day: 'numeric',
-                  hour: 'numeric',
-                  minute: '2-digit',
-                  hour12: true,
-                })}
-              </p>
-            </div>
-          )}
+          <div>
+            <p className="text-sm text-zinc-400">Scheduled for</p>
+            <p className="mt-1 text-white">
+              {game.game_date
+                ? `📅 ${new Date(game.game_date).toLocaleString(undefined, {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true,
+                  })}`
+                : '📅 No date set'}
+            </p>
+          </div>
         </div>
 
         <GameActions
           gameId={game.id}
           joinCode={game.join_code}
           status={game.status}
+          gameName={game.game_name ?? ''}
+          gameDate={game.game_date ?? null}
+          theme={game.theme ?? 'winter'}
         />
       </div>
     </div>

@@ -47,6 +47,7 @@ const tierMap: Record<string, string> = {
 export default function PricingTiers() {
   const router = useRouter()
   const [gameName, setGameName] = useState('')
+  const [gameDate, setGameDate] = useState('')
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -54,6 +55,10 @@ export default function PricingTiers() {
     if (tierId === 'free') {
       if (!gameName.trim()) {
         setError('Please enter a game name before continuing.')
+        return
+      }
+      if (!gameDate) {
+        setError('Please set a date and time for your party.')
         return
       }
       setLoading('free')
@@ -64,6 +69,7 @@ export default function PricingTiers() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           game_name: gameName.trim(),
+          game_date: new Date(gameDate).toISOString(),
           tier: 'free',
         }),
       })
@@ -122,20 +128,35 @@ export default function PricingTiers() {
           <p className="mt-2 text-zinc-400">Pick the size that fits your game night.</p>
         </div>
 
-        <div className="mx-auto mb-8 max-w-sm space-y-1">
-          <label htmlFor="game_name" className="block text-sm font-medium text-zinc-300">
-            Game name
-          </label>
-          <input
-            id="game_name"
-            type="text"
-            required
-            maxLength={60}
-            value={gameName}
-            onChange={(e) => setGameName(e.target.value)}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-white focus:outline-none"
-            placeholder="e.g. Office Holiday Party"
-          />
+        <div className="mx-auto mb-8 max-w-sm space-y-3">
+          <div className="space-y-1">
+            <label htmlFor="game_name" className="block text-sm font-medium text-zinc-300">
+              Game name
+            </label>
+            <input
+              id="game_name"
+              type="text"
+              required
+              maxLength={60}
+              value={gameName}
+              onChange={(e) => setGameName(e.target.value)}
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-white focus:outline-none"
+              placeholder="e.g. Office Holiday Party"
+            />
+          </div>
+          <div className="space-y-1">
+            <label htmlFor="game_date" className="block text-sm font-medium text-zinc-300">
+              Party date &amp; time
+            </label>
+            <input
+              id="game_date"
+              type="datetime-local"
+              required
+              value={gameDate}
+              onChange={(e) => setGameDate(e.target.value)}
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white focus:border-white focus:outline-none [color-scheme:dark]"
+            />
+          </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

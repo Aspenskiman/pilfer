@@ -5,6 +5,7 @@ import { z } from 'zod'
 
 const CreateGameSchema = z.object({
   game_name: GameNameSchema,
+  game_date: z.string().min(1),
   tier: z.literal('free'),
 })
 
@@ -27,6 +28,7 @@ export async function POST(request: Request) {
     .insert({
       host_id: user.id,
       game_name: parsed.data.game_name,
+      game_date: parsed.data.game_date,
       join_code: generateJoinCode(),
       status: 'setup',
       theme: 'winter',
