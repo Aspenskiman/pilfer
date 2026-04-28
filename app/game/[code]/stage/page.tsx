@@ -33,6 +33,7 @@ export default function StagePage({
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [stealAnnouncement, setStealAnnouncement] = useState<string | null>(null)
   const [lockAnnouncement, setLockAnnouncement] = useState<string | null>(null)
+  const [hostActionMode, setHostActionMode] = useState<'open' | 'steal' | null>(null)
   const feedBottomRef = useRef<HTMLDivElement>(null)
 
   // Bootstrap: resolve join code → gameId, get current user
@@ -95,6 +96,9 @@ export default function StagePage({
   const holderIds = new Set(gifts.map((g) => g.current_holder).filter(Boolean))
   const wrappedGifts = gifts.filter((g) => !g.is_opened)
   const openedGifts = gifts.filter((g) => g.is_opened)
+  const hostStealableGifts = gifts.filter(
+    (g) => g.is_opened && !g.is_locked && g.current_holder !== game?.current_turn_player_id
+  )
 
   const isHost = !!userId && !!game && userId === game.host_id
 
@@ -104,6 +108,19 @@ export default function StagePage({
     const { data, error } = await supabase.rpc('pilfer_open_gift', {
       p_game_id: game.id,
       p_player_id: game.current_turn_player_id,
+      p_gift_id: giftId,
+    })
+    if (error || !data?.success) {
+      setErrorMsg(data?.error ?? 'Something went wrong')
+    }
+  }
+
+  async function stealGiftForPlayer(giftId: string) {
+    if (!game?.current_turn_player_id) return
+    const supabase = createClient()
+    const { data, error } = await supabase.rpc('pilfer_steal_gift', {
+      p_game_id: game.id,
+      p_actor_id: game.current_turn_player_id,
       p_gift_id: giftId,
     })
     if (error || !data?.success) {
@@ -158,6 +175,69 @@ export default function StagePage({
         )}
       </AnimatePresence>
 
+      {/* Host action overlay */}
+      {hostActionMode && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setHostActionMode(null)} />
+          <div className="relative z-10 w-full max-w-sm mx-4 bg-[#1A2B4A] border border-white/15 rounded-xl shadow-2xl p-5">
+            <h3 className="text-sm font-semibold uppercase tracking-widest text-[#B8922A] mb-4">
+              {hostActionMode === 'open' ? 'Open a gift for ' : 'Steal a gift for '}
+              {currentTurnPlayer?.display_name}
+            </h3>
+
+            {hostActionMode === 'open' && (
+              <div className="flex flex-wrap gap-2">
+                {wrappedGifts.length === 0 ? (
+                  <p className="text-white/40 text-sm">No wrapped gifts remaining.</p>
+                ) : wrappedGifts.map((gift, index) => (
+                  <button
+                    key={gift.id}
+                    onClick={() => { openGiftForPlayer(gift.id); setHostActionMode(null) }}
+                    className="flex flex-col items-center justify-center w-24 rounded-xl bg-white/8 border border-white/15 p-3 hover:bg-white/15 active:scale-95 transition-all"
+                  >
+                    <span className="text-2xl">🎁</span>
+                    <span className="text-[11px] text-white/60 mt-1">Gift {index + 1}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {hostActionMode === 'steal' && (
+              <div className="space-y-2">
+                {hostStealableGifts.length === 0 ? (
+                  <p className="text-white/40 text-sm">No stealable gifts available.</p>
+                ) : hostStealableGifts.map((gift) => {
+                  const holder = players.find((p) => p.id === gift.current_holder)
+                  return (
+                    <button
+                      key={gift.id}
+                      onClick={() => { stealGiftForPlayer(gift.id); setHostActionMode(null) }}
+                      className="w-full flex items-center gap-3 rounded-xl bg-white/8 border border-white/15 px-3 py-2.5 text-left hover:bg-white/15 active:scale-[0.98] transition-all"
+                    >
+                      <span className="text-xl">🎁</span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold truncate">{gift.gift_name}</p>
+                        {holder && (
+                          <p className="text-[11px] text-white/40">Held by {holder.display_name}</p>
+                        )}
+                      </div>
+                      <span className="text-[#B8922A] text-xs font-bold shrink-0 ml-auto">Steal →</span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+
+            <button
+              onClick={() => setHostActionMode(null)}
+              className="mt-4 w-full rounded-xl border border-white/15 py-2 text-sm text-white/50 hover:bg-white/8 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── LEFT COLUMN — Players ──────────────────────────────── */}
       <div className="w-1/5 border-r border-white/10 flex flex-col min-w-0">
         <h2 className="px-4 py-3 text-xs font-semibold uppercase tracking-widest text-[#B8922A] shrink-0">
@@ -193,7 +273,24 @@ export default function StagePage({
                     </span>
                   )}
                 </span>
-                <span className="text-base shrink-0">{hasGift ? '✅' : '⏳'}</span>
+                {isHost && isCurrent ? (
+                  <div className="flex gap-1 shrink-0">
+                    <button
+                      onClick={() => setHostActionMode('open')}
+                      className="text-[10px] font-semibold px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-white/70 transition-colors"
+                    >
+                      Open
+                    </button>
+                    <button
+                      onClick={() => setHostActionMode('steal')}
+                      className="text-[10px] font-semibold px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-white/70 transition-colors"
+                    >
+                      Steal
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-base shrink-0">{hasGift ? '✅' : '⏳'}</span>
+                )}
               </li>
             )
           })}
@@ -302,32 +399,7 @@ export default function StagePage({
             </p>
           )}
 
-          {/* Host Controls */}
-          {isHost && wrappedGifts.length > 0 && currentTurnPlayer && (
-            <section className="border-t border-white/10 pt-6">
-              <h3 className="text-xs font-semibold uppercase tracking-widest text-[#B8922A] mb-1">
-                Host Controls
-              </h3>
-              <p className="text-xs text-white/40 mb-3">
-                Open a gift on behalf of the current player
-              </p>
-              <div className="flex flex-wrap gap-3">
-                {wrappedGifts.map((gift, index) => (
-                  <button
-                    key={gift.id}
-                    onClick={() => openGiftForPlayer(gift.id)}
-                    className="flex flex-col items-center justify-center w-28 rounded-xl bg-white/5 border border-white/10 p-3 hover:bg-white/10 active:scale-95 transition-all"
-                  >
-                    <span className="text-2xl">🎁</span>
-                    <span className="text-[11px] text-white/50 mt-1">Gift {index + 1}</span>
-                    <span className="text-[10px] text-[#B8922A] mt-1 text-center leading-tight">
-                      Open for {currentTurnPlayer.display_name}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </section>
-          )}
+
         </div>
       </div>
 
