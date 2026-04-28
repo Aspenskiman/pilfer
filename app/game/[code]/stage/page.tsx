@@ -8,6 +8,7 @@ import { useGameState } from '@/hooks/useGameState'
 import { usePlayers } from '@/hooks/usePlayers'
 import { useGifts } from '@/hooks/useGifts'
 import { useFeedEvents } from '@/hooks/useFeedEvents'
+import { QRCodeSVG } from 'qrcode.react'
 import type { FeedEvent } from '@/types'
 
 function getFeedEventStyle(event: FeedEvent): React.CSSProperties {
@@ -374,13 +375,30 @@ export default function StagePage({
         {/* Gift area — scrollable */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-8">
 
-          {/* Game title */}
-          <h1
-            className="text-3xl font-bold text-center text-[#B8922A] tracking-tight"
-            style={{ fontFamily: 'var(--font-playfair)' }}
-          >
-            {game.game_name}
-          </h1>
+          {/* Game title + QR code */}
+          {(() => {
+            const joinUrl = typeof window !== 'undefined'
+              ? `${window.location.origin}/join/${game.join_code}`
+              : ''
+            return (
+              <div className="flex items-center justify-between gap-4">
+                <h1
+                  className="text-3xl font-bold text-[#B8922A] tracking-tight"
+                  style={{ fontFamily: 'var(--font-playfair)' }}
+                >
+                  {game.game_name}
+                </h1>
+                {joinUrl && (game.status === 'invited' || game.status === 'active') && (
+                  <div className="flex flex-col items-center gap-1 shrink-0">
+                    <div className="rounded-lg bg-white p-1">
+                      <QRCodeSVG value={joinUrl} size={80} />
+                    </div>
+                    <p className="text-[10px] text-white/30">Scan to join</p>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
 
           {/* Wrapped gifts */}
           {wrappedGifts.length > 0 && (
