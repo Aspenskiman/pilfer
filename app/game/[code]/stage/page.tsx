@@ -388,7 +388,7 @@ export default function StagePage({
                 >
                   {game.game_name}
                 </h1>
-                {joinUrl && (game.status === 'invited' || game.status === 'active') && (
+                {joinUrl && (
                   <div className="flex flex-col items-center gap-1 shrink-0">
                     <div className="rounded-lg bg-white p-1">
                       <QRCodeSVG value={joinUrl} size={80} />
