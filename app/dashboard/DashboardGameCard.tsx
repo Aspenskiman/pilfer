@@ -29,7 +29,7 @@ function StatusPill({ status }: { status: GameCardProps['status'] }) {
   if (status === 'invited') {
     return (
       <span className="inline-flex items-center rounded-full bg-blue-500/20 border border-blue-500/30 px-3 py-1 text-xs font-semibold text-blue-400 shrink-0">
-        Invites Sent
+        Open for Joining
       </span>
     )
   }
