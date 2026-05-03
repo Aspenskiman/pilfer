@@ -56,15 +56,28 @@ export default function DashboardGameCard({
   const showQr = status === 'invited' || status === 'active'
 
   async function handleShare() {
-    const shareData = {
-      title: 'Join my Pilfer game!',
-      text: `You're invited to ${game_name ?? 'Pilfer'}! Join code: ${join_code}`,
-      url: joinUrl,
-    }
+    const formattedDate = game_date
+      ? new Date(game_date).toLocaleString(undefined, {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+        })
+      : 'Date TBD'
+    const shareUrl = `${window.location.origin}/join/${join_code}`
+    const shareText = `You're invited to ${game_name ?? 'Pilfer'} on Pilfer! 🎁\n\n📅 ${formattedDate}\n🔑 Join code: ${join_code}\n\nTap the link to join — pick up your phone and scan the QR code when you arrive!`
     if (typeof navigator !== 'undefined' && navigator.share) {
-      try { await navigator.share(shareData) } catch { /* dismissed */ }
+      try {
+        await navigator.share({
+          title: `Join ${game_name ?? 'Pilfer'} on Pilfer!`,
+          text: shareText,
+          url: shareUrl,
+        })
+      } catch { /* dismissed */ }
     } else {
-      await navigator.clipboard.writeText(joinUrl)
+      await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     }
