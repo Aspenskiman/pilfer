@@ -3,30 +3,32 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-const THEMES = [
-  { id: 'winter_celebration', label: 'Winter Celebration', emoji: '❄️' },
-  { id: 'birthday_bash',      label: 'Birthday Bash',      emoji: '🎂' },
-  { id: 'shower_party',       label: 'Shower Party',       emoji: '🌸' },
-  { id: 'team_mode',          label: 'Team Mode',          emoji: '👥' },
-  { id: 'fall_gathering',     label: 'Fall Gathering',     emoji: '🍂' },
-  { id: 'just_for_fun',       label: 'Just for Fun',       emoji: '🎉' },
-  { id: 'summer_vibes',       label: 'Summer Vibes',       emoji: '☀️' },
-  { id: 'celebration',        label: 'Celebration',        emoji: '🎊' },
-]
+import { THEMES, DEFAULT_THEME } from '@/constants/themes'
+
+function toDatetimeLocal(isoString: string): string {
+  const d = new Date(isoString)
+  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+  return local.toISOString().slice(0, 16)
+}
 
 type Game = {
   id: string
   game_name: string | null
   join_code: string
   status: string
+  game_date: string | null
+  theme: string | null
+  video_url: string | null
 }
 
 export default function GameSetupForm({ game }: { game: Game }) {
   const router = useRouter()
   const [gameName, setGameName] = useState(game.game_name ?? '')
-  const [gameDate, setGameDate] = useState('')
-  const [theme, setTheme] = useState('winter_celebration')
-  const [videoUrl, setVideoUrl] = useState('')
+  const [gameDate, setGameDate] = useState(game.game_date ? toDatetimeLocal(game.game_date) : '')
+  const [theme, setTheme] = useState(
+    THEMES.some((t) => t.id === game.theme) ? (game.theme as string) : DEFAULT_THEME
+  )
+  const [videoUrl, setVideoUrl] = useState(game.video_url ?? '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -43,11 +45,11 @@ export default function GameSetupForm({ game }: { game: Game }) {
         game_name: gameName,
         game_date: new Date(gameDate).toISOString(),
         theme,
-        video_url: videoUrl || null,
+        video_url: videoUrl.trim() || null,
       }),
     })
 
-    const data = await res.json()
+    const data = await res.json().catch(() => ({}))
     setLoading(false)
 
     if (!res.ok) {
@@ -75,17 +77,17 @@ export default function GameSetupForm({ game }: { game: Game }) {
           {/* Game name */}
           <div className="space-y-1">
             <label htmlFor="game_name" className="block text-sm font-medium text-zinc-300">
-              Game name <span className="text-zinc-500">(max 40 chars)</span>
+              Game name
             </label>
             <input
               id="game_name"
               type="text"
               required
-              maxLength={40}
+              maxLength={60}
               value={gameName}
               onChange={(e) => setGameName(e.target.value)}
               className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-white focus:outline-none"
-              placeholder="e.g. Sarah's Birthday Trivia"
+              placeholder="e.g. Office Holiday Party"
             />
           </div>
 
@@ -148,7 +150,7 @@ export default function GameSetupForm({ game }: { game: Game }) {
             disabled={loading}
             className="w-full rounded-lg bg-white px-4 py-3 font-semibold text-zinc-950 transition hover:bg-zinc-200 disabled:opacity-50"
           >
-            {loading ? 'Saving…' : 'Create game'}
+            {loading ? 'Saving…' : 'Save and continue'}
           </button>
         </form>
       </div>

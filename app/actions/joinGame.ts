@@ -3,28 +3,38 @@
 import { createClient } from '@/lib/supabase-server'
 import { JoinGameSchema } from '@/lib/validate'
 
-export async function joinGame(formData: { display_name: string; game_id: string; role?: 'participant' | 'spectator' }) {
+type JoinResult =
+  | { player_id: string; session_token: string; role: 'participant' | 'spectator' }
+  | { error: string; full?: boolean }
+
+export async function joinGame(formData: {
+  display_name: string
+  game_id: string
+  role?: 'participant' | 'spectator'
+}): Promise<JoinResult> {
   const parsed = JoinGameSchema.safeParse(formData)
   if (!parsed.success) {
-    return { error: parsed.error.flatten().fieldErrors }
+    return { error: parsed.error.flatten().fieldErrors.display_name?.[0] ?? 'Please check your name.' }
   }
 
   const supabase = await createClient()
-  const session_token = crypto.randomUUID()
+  // The database function enforces the player cap and issues the session token.
+  const { data, error } = await supabase.rpc('pilfer_join_game', {
+    p_game_id: parsed.data.game_id,
+    p_display_name: parsed.data.display_name,
+    p_role: parsed.data.role,
+  })
 
-  const { data, error } = await supabase
-    .from('players')
-    .insert({
-      game_id: parsed.data.game_id,
-      display_name: parsed.data.display_name,
-      session_token,
-      is_active: true,
-      role: parsed.data.role,
-    })
-    .select('id')
-    .single()
+  if (error || !data) {
+    console.error('[joinGame]', error?.message)
+    return { error: 'Failed to join. Please try again.' }
+  }
+  if (!data.success) {
+    if (data.error === 'full') {
+      return { error: 'This game is full for gift givers — you can still join as a spectator', full: true }
+    }
+    return { error: data.error ?? 'Failed to join. Please try again.' }
+  }
 
-  if (error) return { error: 'Failed to join game' }
-
-  return { player_id: data.id, session_token }
+  return { player_id: data.player_id, session_token: data.session_token, role: data.role }
 }

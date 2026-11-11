@@ -4,7 +4,9 @@ import { use, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { submitGift } from '@/app/actions/submitGift'
-import { LOCAL_STORAGE_PLAYER_KEY } from '@/constants/game'
+import { LOCAL_STORAGE_PLAYER_KEY, LOCAL_STORAGE_TOKEN_KEY } from '@/constants/game'
+
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024
 
 type Game = {
   id: string
@@ -79,13 +81,26 @@ export default function SubmitGiftPage({
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    if (!file.type.startsWith('image/')) {
+      setError('Please choose an image file.')
+      return
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setError('That photo is too large — please use one under 8 MB.')
+      return
+    }
+    setError(null)
     setImageFile(file)
     setImagePreview(URL.createObjectURL(file))
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!game || !playerId) return
+    if (!game) return
+    if (!playerId) {
+      setError('We could not find your player on this device. Please rejoin from your invite link.')
+      return
+    }
     if (!imageFile) {
       setError('Please upload a photo of your gift.')
       return
@@ -98,14 +113,14 @@ export default function SubmitGiftPage({
     const supabase = createClient()
 
     // Upload image client-side — Storage SDK requires browser File object
-    const ext = imageFile.name.split('.').pop()
-    const filename = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${ext}`
+    const ext = (imageFile.name.split('.').pop() ?? 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg'
+    const filename = `${game.id}/${crypto.randomUUID()}.${ext}`
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('gift-images')
-      .upload(filename, imageFile, { upsert: true })
+      .upload(filename, imageFile, { upsert: false, contentType: imageFile.type })
 
     if (uploadError) {
-      setError(uploadError.message)
+      setError('Photo upload failed. Please try again.')
       setSubmitting(false)
       return
     }
@@ -118,6 +133,7 @@ export default function SubmitGiftPage({
     const result = await submitGift({
       game_id: game.id,
       player_id: playerId,
+      session_token: localStorage.getItem(LOCAL_STORAGE_TOKEN_KEY),
       gift_name: giftName,
       description: description || undefined,
       delivery_info: deliveryInfo || undefined,
@@ -126,12 +142,12 @@ export default function SubmitGiftPage({
 
     setSubmitting(false)
 
+    if ('fieldErrors' in result) {
+      setFieldErrors(result.fieldErrors)
+      return
+    }
     if ('error' in result) {
-      if (typeof result.error === 'string') {
-        setError(result.error)
-      } else {
-        setFieldErrors(result.error as Record<string, string[]>)
-      }
+      setError(result.error)
       return
     }
 
@@ -236,7 +252,7 @@ export default function SubmitGiftPage({
           {/* Delivery info — required */}
           <div className="space-y-1">
             <label className="block text-sm font-medium text-zinc-300">
-              Delivery info <span className="text-zinc-500">(private — only you and the host see this)</span>
+              Delivery info <span className="text-zinc-500">(private — shown only to whoever wins your gift, and the host)</span>
             </label>
             <input
               type="text"

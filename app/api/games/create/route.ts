@@ -1,53 +1,32 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase-server'
-import { GameNameSchema } from '@/lib/validate'
 import { z } from 'zod'
+import { createClient } from '@/lib/supabase-server'
+import { createFreeGame } from '@/lib/games'
+import { GameNameSchema } from '@/lib/validate'
 
 const CreateGameSchema = z.object({
   game_name: GameNameSchema,
-  game_date: z.string().min(1),
+  game_date: z.string().datetime({ offset: true }),
   tier: z.literal('free'),
 })
 
 export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const body = await request.json()
-  const parsed = CreateGameSchema.safeParse(body)
+  const parsed = CreateGameSchema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+    return NextResponse.json({ error: 'Please check the game name and date.' }, { status: 400 })
   }
 
-  const { data, error } = await supabase
-    .from('party_games')
-    .insert({
-      host_id: user.id,
-      game_name: parsed.data.game_name,
-      game_date: parsed.data.game_date,
-      join_code: generateJoinCode(),
-      status: 'setup',
-      theme: 'winter',
-      player_limit: 8,
-      game_type: 'pilfer',
-    })
-    .select('id')
-    .single()
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  const result = await createFreeGame(user.id, parsed.data.game_name, parsed.data.game_date)
+  if ('error' in result) {
+    console.error('[games/create]', result.error)
+    return NextResponse.json({ error: 'Failed to create game. Please try again.' }, { status: 500 })
   }
 
-  return NextResponse.json({ game_id: data.id })
-}
-
-function generateJoinCode(): string {
-  const array = new Uint8Array(6)
-  crypto.getRandomValues(array)
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  return Array.from(array).map(b => chars[b % chars.length]).join('')
+  return NextResponse.json({ game_id: result.game_id })
 }

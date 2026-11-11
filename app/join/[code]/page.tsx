@@ -51,7 +51,7 @@ export default async function JoinCodePage({
   // status is 'invited' or 'active' — fetch participant count
   const { count: participantCount } = await supabase
     .from('players')
-    .select('*', { count: 'exact', head: true })
+    .select('id', { count: 'exact', head: true })
     .eq('game_id', game.id)
     .eq('role', 'participant')
 

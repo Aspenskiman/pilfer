@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Gift } from '@/types'
+import { GIFT_COLUMNS } from '@/constants/game'
 
 export function useGifts(gameId: string | null) {
   const [gifts, setGifts] = useState<Gift[]>([])
@@ -13,12 +14,13 @@ export function useGifts(gameId: string | null) {
     async function fetchGifts() {
       const { data } = await supabase
         .from('gifts')
-        .select('*')
+        .select(GIFT_COLUMNS)
         .eq('game_id', gameId)
-      setGifts(data ?? [])
+      if (data) setGifts(data as unknown as Gift[])
     }
 
     fetchGifts()
+    const poll = setInterval(fetchGifts, 5000)
 
     const channel = supabase
       .channel(`gifts:${gameId}`)
@@ -29,7 +31,7 @@ export function useGifts(gameId: string | null) {
       )
       .subscribe()
 
-    return () => { supabase.removeChannel(channel) }
+    return () => { clearInterval(poll); supabase.removeChannel(channel) }
   }, [gameId])
 
   return gifts

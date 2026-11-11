@@ -20,6 +20,7 @@ export function useGameState(gameId: string | null) {
     }
 
     fetchGame()
+    const poll = setInterval(fetchGame, 5000)
 
     const channel = supabase
       .channel(`game-state:${gameId}`)
@@ -30,7 +31,7 @@ export function useGameState(gameId: string | null) {
       )
       .subscribe()
 
-    return () => { supabase.removeChannel(channel) }
+    return () => { clearInterval(poll); supabase.removeChannel(channel) }
   }, [gameId])
 
   return game

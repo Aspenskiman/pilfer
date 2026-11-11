@@ -2,130 +2,78 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { TIERS } from '@/constants/tiers'
+import type { Tier } from '@/types'
 
-const TIERS = [
-  {
-    id: 'free',
-    label: 'The Taster',
-    players: 'Up to 8 players',
-    price: 'Free',
-    cta: 'Start for free',
-    highlight: false,
-  },
-  {
-    id: 'tier1',
-    label: 'The Gathering',
-    players: 'Up to 15 players',
-    price: '$29.99',
-    cta: 'Choose this plan',
-    highlight: false,
-  },
-  {
-    id: 'tier2',
-    label: 'The Party',
-    players: 'Up to 30 players',
-    price: '$49.99',
-    cta: 'Choose this plan',
-    highlight: true,
-  },
-  {
-    id: 'tier3',
-    label: 'The Bash',
-    players: 'Up to 50 players',
-    price: '$79.99',
-    cta: 'Choose this plan',
-    highlight: false,
-  },
-]
-
-const tierMap: Record<string, string> = {
-  tier1: 'gathering',
-  tier2: 'party',
-  tier3: 'bash',
-}
+const PERSONAL = TIERS.filter((t) => t.group === 'personal')
+const TEAM = TIERS.filter((t) => t.group === 'team')
 
 export default function PricingTiers() {
   const router = useRouter()
+  const [group, setGroup] = useState<'personal' | 'team'>('personal')
   const [gameName, setGameName] = useState('')
   const [gameDate, setGameDate] = useState('')
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  async function handleSelect(tierId: string) {
-    if (tierId === 'free') {
-      if (!gameName.trim()) {
-        setError('Please enter a game name before continuing.')
-        return
-      }
-      if (!gameDate) {
-        setError('Please set a date and time for your party.')
-        return
-      }
-      setLoading('free')
-      setError(null)
+  async function handleSelect(tier: Tier) {
+    if (loading) return
 
-      const res = await fetch('/api/games/create', {
+    if (!gameName.trim()) {
+      setError('Please enter a game name first.')
+      return
+    }
+    if (!gameDate || Number.isNaN(new Date(gameDate).getTime())) {
+      setError('Please set a date and time for your party.')
+      return
+    }
+
+    setLoading(tier.id)
+    setError(null)
+
+    const isFree = tier.priceInCents == null
+    try {
+      const res = await fetch(isFree ? '/api/games/create' : '/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          tier: tier.id,
           game_name: gameName.trim(),
           game_date: new Date(gameDate).toISOString(),
-          tier: 'free',
         }),
       })
-
-      const data = await res.json()
-      setLoading(null)
+      const data = await res.json().catch(() => ({}))
 
       if (!res.ok) {
-        const errMsg = typeof data.error === 'string'
-          ? data.error
-          : 'Failed to create game. Please try again.'
-        setError(errMsg)
+        setError(typeof data.error === 'string' ? data.error : 'Something went wrong. Please try again.')
+        setLoading(null)
         return
       }
 
-      router.push(`/dashboard/${data.game_id}`)
-      return
+      if (isFree) {
+        router.push(`/dashboard/${data.game_id}`)
+      } else if (data.url) {
+        window.location.href = data.url // keep the button disabled while redirecting
+      } else {
+        setError('Something went wrong. Please try again.')
+        setLoading(null)
+      }
+    } catch {
+      setError('Network problem. Please check your connection and try again.')
+      setLoading(null)
     }
-
-    if (!gameName.trim()) {
-      setError('Please enter a game name before selecting a plan.')
-      return
-    }
-
-    setLoading(tierId)
-    setError(null)
-
-    const res = await fetch('/api/stripe/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        tier: tierMap[tierId] ?? tierId,
-        game_name: gameName.trim(),
-      }),
-    })
-
-    const data = await res.json()
-    setLoading(null)
-
-    if (!res.ok || !data.url) {
-      const errMsg = typeof data.error === 'string'
-        ? data.error
-        : 'Something went wrong. Please try again.'
-      setError(errMsg)
-      return
-    }
-
-    window.location.href = data.url
   }
+
+  const tiers = group === 'personal' ? PERSONAL : TEAM
 
   return (
     <div className="min-h-screen bg-zinc-950 px-4 py-16">
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-12 text-center">
-          <h1 className="text-3xl font-bold text-white">Choose your plan</h1>
-          <p className="mt-2 text-zinc-400">Pick the size that fits your game night.</p>
+      <div className="mx-auto max-w-4xl">
+        <div className="mb-10 text-center">
+          <h1 className="text-3xl font-bold text-white">Set up your game</h1>
+          <p className="mt-2 text-zinc-400">
+            One price per game. Players never pay, and spectators are always free.
+          </p>
         </div>
 
         <div className="mx-auto mb-8 max-w-sm space-y-3">
@@ -159,14 +107,27 @@ export default function PricingTiers() {
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {TIERS.map((tier) => (
+        <div className="mx-auto mb-6 flex max-w-sm rounded-xl border border-zinc-700 bg-zinc-900 p-1">
+          {(['personal', 'team'] as const).map((g) => (
+            <button
+              key={g}
+              type="button"
+              onClick={() => setGroup(g)}
+              className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                group === g ? 'bg-white text-zinc-950' : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              {g === 'personal' ? 'Friends & family' : 'Work & organizations'}
+            </button>
+          ))}
+        </div>
+
+        <div className={`mx-auto grid gap-4 ${tiers.length === 3 ? 'sm:grid-cols-3' : 'max-w-2xl sm:grid-cols-2'}`}>
+          {tiers.map((tier) => (
             <div
               key={tier.id}
               className={`flex flex-col rounded-xl border p-6 ${
-                tier.highlight
-                  ? 'border-white bg-zinc-800'
-                  : 'border-zinc-700 bg-zinc-900'
+                tier.highlight ? 'border-white bg-zinc-800' : 'border-zinc-700 bg-zinc-900'
               }`}
             >
               {tier.highlight && (
@@ -176,26 +137,37 @@ export default function PricingTiers() {
               )}
               <h2 className="text-lg font-semibold text-white">{tier.label}</h2>
               <p className="mt-1 text-sm text-zinc-400">{tier.players}</p>
-              <p className="mt-4 text-3xl font-bold text-white">{tier.price}</p>
+              <p className="mt-4 text-3xl font-bold text-white">
+                {tier.price}
+                {tier.priceInCents != null && (
+                  <span className="ml-1 text-sm font-normal text-zinc-400">per game</span>
+                )}
+              </p>
 
               <button
-                onClick={() => handleSelect(tier.id)}
-                disabled={loading === tier.id}
+                onClick={() => handleSelect(tier)}
+                disabled={loading !== null}
                 className={`mt-6 w-full rounded-lg px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 ${
                   tier.highlight
                     ? 'bg-white text-zinc-950 hover:bg-zinc-200'
                     : 'border border-zinc-600 text-white hover:bg-zinc-800'
                 }`}
               >
-                {loading === tier.id ? 'Redirecting…' : tier.cta}
+                {loading === tier.id
+                  ? tier.priceInCents == null ? 'Creating…' : 'Redirecting to checkout…'
+                  : tier.cta}
               </button>
             </div>
           ))}
         </div>
 
-        {error && (
-          <p className="mt-6 text-center text-sm text-red-400">{error}</p>
-        )}
+        <p className="mt-6 text-center text-sm text-zinc-500">
+          {group === 'personal'
+            ? 'For non-commercial games with friends and family.'
+            : 'For companies, teams, churches, schools and other organizations. Includes a receipt for expensing.'}
+        </p>
+
+        {error && <p className="mt-4 text-center text-sm text-red-400">{error}</p>}
       </div>
     </div>
   )

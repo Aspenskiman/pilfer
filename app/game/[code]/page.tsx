@@ -22,6 +22,7 @@ export default function GamePage({
   const [alreadySubmitted, setAlreadySubmitted] = useState(false)
   const [notFound, setNotFound] = useState(false)
   const [startingGame, setStartingGame] = useState(false)
+  const [startError, setStartError] = useState<string | null>(null)
 
   // Bootstrap: resolve join code → gameId, get auth user
   useEffect(() => {
@@ -68,60 +69,42 @@ export default function GamePage({
 
   const submittedIds = new Set(gifts.map((g) => g.submitted_by))
   const isHost = authUser?.id === game?.host_id
-  const allSubmitted = players.length > 0 && players.every((p) => submittedIds.has(p.id))
+  const gifters = players.filter((p) => p.role === 'participant')
+  const allSubmitted = gifters.length > 0 && gifters.every((p) => submittedIds.has(p.id))
 
   async function handleStartGame() {
-    if (!game || players.length === 0) return
-    setStartingGame(true)
+    if (!game || startingGame) return
+    setStartError(null)
 
-    const supabase = createClient()
+    const withGift = players.filter((p) => submittedIds.has(p.id))
+    const withoutGift = players.filter((p) => p.role === 'participant' && !submittedIds.has(p.id))
 
-    // Pre-flight: split players into participants (submitted a gift) and auto-spectators
-    // TODO: submittedIds is also computed at component level (line ~69) —
-    // consolidate into one when refactoring
-    const submittedByIds = new Set(gifts.map((g) => g.submitted_by))
-    const participants = players.filter((p) => submittedByIds.has(p.id))
-    const autoSpectators = players.filter((p) => !submittedByIds.has(p.id))
+    if (withGift.length < 2) {
+      setStartError('You need at least 2 players who have submitted a gift.')
+      return
+    }
 
-    if (autoSpectators.length > 0) {
+    if (withoutGift.length > 0) {
       const confirmed = window.confirm(
         `Ready to go live?\n\n` +
-        `✅ ${participants.length} participants — gifted up\n` +
-        `⚠️ ${autoSpectators.length} spectators (no gift submitted):\n` +
-        `${autoSpectators.map((p) => p.display_name).join(', ')}\n\n` +
+        `✅ ${withGift.length} players — gifted up\n` +
+        `⚠️ ${withoutGift.length} will watch as spectators (no gift submitted):\n` +
+        `${withoutGift.map((p) => p.display_name).join(', ')}\n\n` +
         `Go live anyway?`
       )
-      if (!confirmed) {
-        setStartingGame(false)
-        return
-      }
+      if (!confirmed) return
     }
 
-    // Mark non-submitters as spectators
-    if (autoSpectators.length > 0) {
-      await Promise.all(
-        autoSpectators.map((p) =>
-          supabase.from('players').update({ role: 'spectator' }).eq('id', p.id)
-        )
-      )
-    }
-
-    // Shuffle participants only and assign 1-indexed turn order
-    const shuffled = [...participants].sort(() => Math.random() - 0.5)
-    await Promise.all(
-      shuffled.map((player, i) =>
-        supabase.from('players').update({ turn_order: i + 1 }).eq('id', player.id)
-      )
-    )
-
-    // Go live — set first turn and round number
-    await supabase.from('party_games').update({
-      status: 'active',
-      current_turn_player_id: shuffled[0].id,
-      round_number: 1,
-    }).eq('id', game.id)
-
+    setStartingGame(true)
+    // Turn order, spectators and going live all happen in one database
+    // transaction, so the game can never end up half-started.
+    const supabase = createClient()
+    const { data, error } = await supabase.rpc('pilfer_start_game', { p_game_id: game.id })
     setStartingGame(false)
+
+    if (error || !data?.success) {
+      setStartError(data?.error ?? 'Could not start the game. Please try again.')
+    }
   }
 
   if (notFound) {
@@ -221,6 +204,7 @@ export default function GamePage({
             >
               {startingGame ? 'Starting…' : 'Start Game'}
             </button>
+            {startError && <p className="text-center text-sm text-red-400">{startError}</p>}
             {!allSubmitted && players.length > 0 && (
               <p className="text-center text-xs text-zinc-500">
                 Not everyone has submitted yet — you can still start.

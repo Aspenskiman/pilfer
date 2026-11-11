@@ -18,6 +18,7 @@ export type PartyGame = {
   video_url: string | null
   stripe_payment_id: string | null
   player_limit: number | null
+  plan: string | null
   game_type: string
   current_turn_player_id: string | null
   round_number: number | null
@@ -47,7 +48,6 @@ export type Gift = {
   image_url: string
   gift_name: string
   description: string | null
-  delivery_info: string
   current_holder: string | null
   steal_count: number
   is_locked: boolean
@@ -92,9 +92,10 @@ export type GameStatus = PartyGame['status']
 
 export type Tier = {
   id: string
+  group: 'personal' | 'team'
   label: string
   players: string
-  playerLimit: number | null
+  playerLimit: number
   price: string
   priceInCents: number | null
   cta: string
@@ -105,4 +106,10 @@ export type Theme = {
   id: string
   label: string
   emoji: string
+}
+
+// Private — never selectable by clients. Fetched via the pilfer_get_delivery function.
+export type GiftDelivery = {
+  gift_id: string
+  delivery_info: string | null
 }

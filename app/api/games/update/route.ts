@@ -1,33 +1,41 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase-server'
+import { requireHostGame } from '@/lib/games'
 import { UpdateGameSchema } from '@/lib/validate'
 
 export async function PATCH(request: Request) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const body = await request.json()
-  const parsed = UpdateGameSchema.safeParse(body)
+  const parsed = UpdateGameSchema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+    return NextResponse.json({ error: 'Please check your inputs and try again.' }, { status: 400 })
   }
 
-  const { game_id, game_name, game_date, theme, video_url } = parsed.data
+  const { game_id, ...fields } = parsed.data
+  const ctx = await requireHostGame(game_id)
+  if ('error' in ctx) {
+    return NextResponse.json({ error: ctx.error }, { status: ctx.status })
+  }
 
-  const { data, error } = await supabase
-    .from('party_games')
-    .update({ game_name, game_date, theme, video_url, status: 'invited' })
-    .eq('id', game_id)
-    .select()
-    .single()
+  if (ctx.game.status === 'active' || ctx.game.status === 'complete') {
+    return NextResponse.json(
+      { error: 'This game has already started and can no longer be edited.' },
+      { status: 409 }
+    )
+  }
 
+  // Only these fields are editable, and status is never touched here.
+  const update: Record<string, string | null> = {}
+  if (fields.game_name !== undefined) update.game_name = fields.game_name
+  if (fields.game_date !== undefined) update.game_date = fields.game_date
+  if (fields.theme !== undefined) update.theme = fields.theme
+  if (fields.video_url !== undefined) update.video_url = fields.video_url || null
+
+  if (Object.keys(update).length === 0) {
+    return NextResponse.json({ success: true })
+  }
+
+  const { error } = await ctx.admin.from('party_games').update(update).eq('id', ctx.game.id)
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('[games/update]', error.message)
+    return NextResponse.json({ error: 'Could not save. Please try again.' }, { status: 500 })
   }
-
-  return NextResponse.json(data)
+  return NextResponse.json({ success: true })
 }

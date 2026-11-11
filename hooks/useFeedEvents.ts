@@ -16,7 +16,7 @@ export function useFeedEvents(gameId: string | null) {
         .select('*')
         .eq('game_id', gameId)
         .order('created_at', { ascending: true })
-      setFeedEvents(data ?? [])
+      if (data) setFeedEvents(data)
     }
 
     fetchFeedEvents()
@@ -27,7 +27,8 @@ export function useFeedEvents(gameId: string | null) {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'feed_events', filter: `game_id=eq.${gameId}` },
         (payload) => {
-          setFeedEvents((prev) => [...prev, payload.new as FeedEvent])
+          const event = payload.new as FeedEvent
+          setFeedEvents((prev) => (prev.some((e) => e.id === event.id) ? prev : [...prev, event]))
         }
       )
       .subscribe()

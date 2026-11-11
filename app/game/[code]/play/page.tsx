@@ -58,7 +58,7 @@ export default function PlayPage({
   const players = usePlayers(gameId)
   const gifts = useGifts(gameId)
   const feedEvents = useFeedEvents(gameId)
-  const { currentPlayer } = useCurrentPlayer(players)
+  const { currentPlayer, sessionToken } = useCurrentPlayer(players)
 
   // Auto-scroll feed to bottom on new events
   useEffect(() => {
@@ -107,11 +107,12 @@ export default function PlayPage({
   async function sendFeedEvent(content: string, eventType: 'reaction' | 'taunt') {
     if (!gameId || !currentPlayer) return
     const supabase = createClient()
-    await supabase.from('feed_events').insert({
-      game_id: gameId,
-      player_id: currentPlayer.id,
-      event_type: eventType,
-      content,
+    await supabase.rpc('pilfer_react', {
+      p_game_id: gameId,
+      p_player_id: currentPlayer.id,
+      p_session_token: sessionToken,
+      p_event_type: eventType,
+      p_content: content,
     })
   }
 
@@ -122,6 +123,7 @@ export default function PlayPage({
       p_game_id: game.id,
       p_player_id: currentPlayer.id,
       p_gift_id: giftId,
+      p_session_token: sessionToken,
     })
     if (error || !data?.success) {
       setErrorMsg(data?.error ?? 'Something went wrong')
@@ -135,6 +137,7 @@ export default function PlayPage({
       p_game_id: game.id,
       p_actor_id: currentPlayer.id,
       p_gift_id: giftId,
+      p_session_token: sessionToken,
     })
     if (error || !data?.success) {
       setErrorMsg(data?.error ?? 'Something went wrong')

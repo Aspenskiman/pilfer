@@ -4,6 +4,7 @@ import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import type { PartyGame, Player, Gift, Action } from '@/types'
+import { PLAYER_COLUMNS, GIFT_COLUMNS, LOCAL_STORAGE_PLAYER_KEY, LOCAL_STORAGE_TOKEN_KEY } from '@/constants/game'
 
 export default function RecapPage({
   params,
@@ -16,13 +17,14 @@ export default function RecapPage({
   const [players, setPlayers] = useState<Player[]>([])
   const [gifts, setGifts] = useState<Gift[]>([])
   const [actions, setActions] = useState<Action[]>([])
+  const [delivery, setDelivery] = useState<Record<string, string | null>>({})
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
   const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
-    setCurrentPlayerId(localStorage.getItem('pilfer_player_id'))
+    setCurrentPlayerId(localStorage.getItem(LOCAL_STORAGE_PLAYER_KEY))
   }, [])
 
   useEffect(() => {
@@ -39,14 +41,27 @@ export default function RecapPage({
       setUserId(user?.id ?? null)
 
       const [playersRes, giftsRes, actionsRes] = await Promise.all([
-        supabase.from('players').select('*').eq('game_id', gameData.id),
-        supabase.from('gifts').select('*').eq('game_id', gameData.id),
+        supabase.from('players').select(PLAYER_COLUMNS).eq('game_id', gameData.id),
+        supabase.from('gifts').select(GIFT_COLUMNS).eq('game_id', gameData.id),
         supabase.from('actions').select('*').eq('game_id', gameData.id),
       ])
 
-      setPlayers(playersRes.data ?? [])
-      setGifts(giftsRes.data ?? [])
+      setPlayers((playersRes.data ?? []) as unknown as Player[])
+      setGifts((giftsRes.data ?? []) as unknown as Gift[])
       setActions(actionsRes.data ?? [])
+
+      // Delivery info is private: the database only returns the rows this
+      // viewer is allowed to see (host: all; player: the gift they won).
+      const { data: deliveryRows } = await supabase.rpc('pilfer_get_delivery', {
+        p_game_id: gameData.id,
+        p_player_id: localStorage.getItem(LOCAL_STORAGE_PLAYER_KEY),
+        p_session_token: localStorage.getItem(LOCAL_STORAGE_TOKEN_KEY),
+      })
+      const map: Record<string, string | null> = {}
+      for (const row of (deliveryRows ?? []) as { gift_id: string; delivery_info: string | null }[]) {
+        map[row.gift_id] = row.delivery_info
+      }
+      setDelivery(map)
       setLoading(false)
     }
 
@@ -277,13 +292,13 @@ export default function RecapPage({
                     <p className="text-white font-bold text-lg leading-tight">
                       {myWonGift.gift_name}
                     </p>
-                    {myWonGift.delivery_info && (
+                    {delivery[myWonGift.id] && (
                       <div className="rounded-lg bg-[#B8922A]/20 border border-[#B8922A]/40 px-4 py-3">
                         <p className="text-xs font-semibold text-[#B8922A] mb-1">
                           How to claim
                         </p>
                         <p className="text-white/90 text-sm leading-snug">
-                          {myWonGift.delivery_info}
+                          {delivery[myWonGift.id]}
                         </p>
                       </div>
                     )}
@@ -331,10 +346,10 @@ export default function RecapPage({
                         <span>From: <span className="text-white/70">{submitter?.display_name ?? '—'}</span></span>
                         <span>Won by: <span className="text-white/70">{winner?.display_name ?? '—'}</span></span>
                       </div>
-                      {gift.delivery_info && (
+                      {delivery[gift.id] && (
                         <div className="rounded-lg bg-[#B8922A]/15 border border-[#B8922A]/30 px-3 py-2">
                           <p className="text-xs text-[#B8922A] font-semibold mb-0.5">Delivery info</p>
-                          <p className="text-white/80 text-xs leading-snug">{gift.delivery_info}</p>
+                          <p className="text-white/80 text-xs leading-snug">{delivery[gift.id]}</p>
                         </div>
                       )}
                     </div>

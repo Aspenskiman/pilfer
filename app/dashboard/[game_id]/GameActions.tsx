@@ -19,7 +19,7 @@ function toDatetimeLocal(isoString: string): string {
   return local.toISOString().slice(0, 16)
 }
 
-export default function GameActions({ gameId, joinCode, status, gameName, gameDate, theme }: Props) {
+export default function GameActions({ gameId, joinCode, status, gameDate }: Props) {
   const router = useRouter()
   const [opening, setOpening] = useState(false)
   const [openSuccess, setOpenSuccess] = useState(false)
@@ -38,7 +38,10 @@ export default function GameActions({ gameId, joinCode, status, gameName, gameDa
     })
     setOpening(false)
 
-    if (!res.ok) return
+    if (!res.ok) {
+      setDateError('Could not open the game. Please try again.')
+      return
+    }
 
     setOpenSuccess(true)
     setTimeout(() => router.refresh(), 1000)
@@ -63,16 +66,14 @@ export default function GameActions({ gameId, joinCode, status, gameName, gameDa
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         game_id: gameId,
-        game_name: gameName,
         game_date: new Date(newDate).toISOString(),
-        theme,
       }),
     })
 
     setSavingDate(false)
 
     if (!res.ok) {
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
       setDateError(typeof data.error === 'string' ? data.error : 'Failed to save date.')
       return
     }

@@ -2,50 +2,56 @@ import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { createClient } from '@/lib/supabase-server'
 import { CheckoutSchema } from '@/lib/validate'
-
-const TIERS: Record<string, { name: string; price: number; players: number }> = {
-  gathering: { name: 'The Gathering', price: 2999, players: 15 },
-  party:     { name: 'The Party',     price: 4999, players: 30 },
-  bash:      { name: 'The Bash',      price: 7999, players: 50 },
-}
+import { TIER_MAP } from '@/constants/tiers'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const body = await request.json()
-  const parsed = CheckoutSchema.safeParse(body)
+  const parsed = CheckoutSchema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+    return NextResponse.json({ error: 'Please check the game name and date.' }, { status: 400 })
   }
 
-  const { tier, game_name } = parsed.data
-  const tierConfig = TIERS[tier]
+  const { tier: tierId, game_name, game_date } = parsed.data
+  const tier = TIER_MAP[tierId]
+  if (!tier || tier.priceInCents == null) {
+    return NextResponse.json({ error: 'Unknown plan.' }, { status: 400 })
+  }
 
-  const session = await stripe.checkout.sessions.create({
-    payment_method_types: ['card'],
-    line_items: [
-      {
-        price_data: {
-          currency: 'usd',
-          unit_amount: tierConfig.price,
-          product_data: {
-            name: `Pilfer — ${tierConfig.name}`,
-            description: `Up to ${tierConfig.players} players`,
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin
+
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      customer_email: user.email ?? undefined,
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: 'usd',
+            unit_amount: tier.priceInCents,
+            product_data: {
+              name: `Pilfer — ${tier.label}`,
+              description: `One game, ${tier.players.toLowerCase()}`,
+            },
           },
         },
-        quantity: 1,
-      },
-    ],
-    mode: 'payment',
-    metadata: { tier, game_name, host_id: user.id },
-    success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/dashboard/new&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/new`,
-  })
+      ],
+      metadata: { tier: tier.id, game_name, game_date, host_id: user.id },
+      success_url: `${siteUrl}/dashboard/new?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${siteUrl}/dashboard/new`,
+    })
 
-  return NextResponse.json({ url: session.url })
+    return NextResponse.json({ url: session.url })
+  } catch (err) {
+    console.error('[stripe/checkout]', err)
+    return NextResponse.json(
+      { error: 'Could not start checkout. Please try again.' },
+      { status: 502 }
+    )
+  }
 }

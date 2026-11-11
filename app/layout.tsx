@@ -18,8 +18,19 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Pilfer",
-  description: "Real-time White Elephant gift stealing game",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  title: {
+    default: "Pilfer — the online White Elephant gift exchange game",
+    template: "%s · Pilfer",
+  },
+  description:
+    "Host a live White Elephant gift exchange online. Everyone plays from their phone, the big screen shows every steal. Free for up to 10 players.",
+  openGraph: {
+    title: "Pilfer — the online White Elephant gift exchange game",
+    description:
+      "Open, steal, lock. A live White Elephant game for friends, families and teams. Free for up to 10 players.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

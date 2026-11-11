@@ -1,44 +1,34 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase-server'
 import { z } from 'zod'
+import { requireHostGame } from '@/lib/games'
 
-const OpenGameSchema = z.object({
-  game_id: z.string().uuid(),
-})
+const OpenGameSchema = z.object({ game_id: z.string().uuid() })
 
 export async function POST(request: Request) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const body = await request.json()
-  const parsed = OpenGameSchema.safeParse(body)
+  const parsed = OpenGameSchema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
 
-  const { data: game } = await supabase
-    .from('party_games')
-    .select('id')
-    .eq('id', parsed.data.game_id)
-    .eq('host_id', user.id)
-    .single()
-
-  if (!game) {
-    return NextResponse.json({ error: 'Game not found or not authorized' }, { status: 403 })
+  const ctx = await requireHostGame(parsed.data.game_id)
+  if ('error' in ctx) {
+    return NextResponse.json({ error: ctx.error }, { status: ctx.status })
   }
 
-  const { error } = await supabase
+  // Only a game still in setup can be opened — never move a live game backwards.
+  if (ctx.game.status !== 'setup') {
+    return NextResponse.json({ success: true })
+  }
+
+  const { error } = await ctx.admin
     .from('party_games')
     .update({ status: 'invited' })
-    .eq('id', parsed.data.game_id)
+    .eq('id', ctx.game.id)
+    .eq('status', 'setup')
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('[games/open]', error.message)
+    return NextResponse.json({ error: 'Could not open the game. Please try again.' }, { status: 500 })
   }
-
   return NextResponse.json({ success: true })
 }

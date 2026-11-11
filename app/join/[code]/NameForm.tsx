@@ -2,11 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase'
 import { joinGame } from '@/app/actions/joinGame'
-import { LOCAL_STORAGE_PLAYER_KEY } from '@/constants/game'
-
-const SESSION_TOKEN_KEY = 'pilfer_session_token'
+import { LOCAL_STORAGE_PLAYER_KEY, LOCAL_STORAGE_TOKEN_KEY } from '@/constants/game'
 
 type Game = {
   id: string
@@ -22,9 +19,10 @@ type Props = {
 }
 
 export default function NameForm({ game, participantCount, forceSpectator = false }: Props) {
+  const isFull = game.player_limit != null && participantCount >= game.player_limit
   const router = useRouter()
   const [name, setName] = useState('')
-  const [role, setRole] = useState<'participant' | 'spectator'>('participant')
+  const [role, setRole] = useState<'participant' | 'spectator'>(isFull ? 'spectator' : 'participant')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -35,36 +33,25 @@ export default function NameForm({ game, participantCount, forceSpectator = fals
 
     const effectiveRole = forceSpectator ? 'spectator' : role
 
-    // Check participant capacity at submit time for freshest count
-    if (effectiveRole === 'participant' && game.player_limit != null) {
-      const supabase = createClient()
-      const { count } = await supabase
-        .from('players')
-        .select('*', { count: 'exact', head: true })
-        .eq('game_id', game.id)
-        .eq('role', 'participant')
-
-      if (count != null && count >= game.player_limit) {
-        setError("This game is full for gift givers — you can still join as a spectator")
-        setRole('spectator')
-        setLoading(false)
-        return
-      }
+    // The player cap is enforced on the server, inside the join function.
+    let result: Awaited<ReturnType<typeof joinGame>>
+    try {
+      result = await joinGame({ display_name: name, game_id: game.id, role: effectiveRole })
+    } catch {
+      setError('Network problem. Please try again.')
+      setLoading(false)
+      return
     }
 
-    const result = await joinGame({ display_name: name, game_id: game.id, role: effectiveRole })
-
     if ('error' in result) {
-      const msg = typeof result.error === 'string'
-        ? result.error
-        : (result.error?.display_name?.[0] ?? 'Failed to join. Try again.')
-      setError(msg)
+      setError(result.error)
+      if (result.full) setRole('spectator')
       setLoading(false)
       return
     }
 
     localStorage.setItem(LOCAL_STORAGE_PLAYER_KEY, result.player_id)
-    localStorage.setItem(SESSION_TOKEN_KEY, result.session_token)
+    localStorage.setItem(LOCAL_STORAGE_TOKEN_KEY, result.session_token)
     router.push(`/game/${game.join_code}`)
   }
 
