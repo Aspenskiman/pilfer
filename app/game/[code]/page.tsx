@@ -8,6 +8,7 @@ import { useGameState } from '@/hooks/useGameState'
 import { usePlayers } from '@/hooks/usePlayers'
 import { useGifts } from '@/hooks/useGifts'
 import { useCurrentPlayer } from '@/hooks/useCurrentPlayer'
+import { track } from '@/lib/analytics'
 
 export default function GamePage({
   params,
@@ -104,6 +105,8 @@ export default function GamePage({
 
     if (error || !data?.success) {
       setStartError(data?.error ?? 'Could not start the game. Please try again.')
+    } else {
+      track('game_started', { players: withGift.length })
     }
   }
 

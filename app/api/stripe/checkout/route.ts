@@ -35,7 +35,7 @@ export async function POST(request: Request) {
             currency: 'usd',
             unit_amount: tier.priceInCents,
             product_data: {
-              name: `Pilfer — ${tier.label}`,
+              name: `Jamble — Pilfer game (${tier.label})`,
               description: `One game, ${tier.players.toLowerCase()}`,
             },
           },

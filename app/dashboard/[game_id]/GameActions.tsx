@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { QRCodeSVG } from 'qrcode.react'
+import { track } from '@/lib/analytics'
 
 type Props = {
   gameId: string
@@ -43,6 +44,7 @@ export default function GameActions({ gameId, joinCode, status, gameDate }: Prop
       return
     }
 
+    track('game_opened_for_joining')
     setOpenSuccess(true)
     setTimeout(() => router.refresh(), 1000)
   }

@@ -11,7 +11,7 @@ export default function TermsPage() {
       <section>
         <h2>What Pilfer is</h2>
         <p>
-          Pilfer is an online tool for running a White Elephant style gift exchange game. Hosts
+          Pilfer is operated by Jamble (&quot;we&quot;, &quot;us&quot;). It is an online tool for running a White Elephant style gift exchange game. Hosts
           create a game and invite players. Players bring and deliver their own gifts. Pilfer does
           not sell, buy, hold or ship gifts and is not a party to any exchange between players.
         </p>

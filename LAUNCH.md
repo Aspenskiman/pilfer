@@ -19,6 +19,9 @@ browser yet — the rehearsal in step 6 is the first real test.
    - `NEXT_PUBLIC_SITE_URL` = the real https domain (no trailing slash)
    - `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (live keys)
    - `STRIPE_WEBHOOK_SECRET` (from step 5)
+   - Optional but recommended: `SENTRY_DSN` and `NEXT_PUBLIC_SENTRY_DSN` (error
+     tracking), `NEXT_PUBLIC_POSTHOG_KEY` and `NEXT_PUBLIC_POSTHOG_HOST`
+     (funnel analytics). Both stay switched off until these are set.
 5. **Stripe** — Developers → Webhooks → add endpoint
    `https://<domain>/api/stripe/webhook`, event `checkout.session.completed`.
    Copy the signing secret into `STRIPE_WEBHOOK_SECRET` and redeploy.
@@ -50,7 +53,7 @@ browser yet — the rehearsal in step 6 is the first real test.
 
 ## Known gaps (not launch blockers)
 
-- No transactional email, analytics or error tracking wired up yet.
+- No transactional email. Error tracking and analytics are wired but off until their keys are set.
 - Themes are stored but do not change the look of the game.
 - No embedded video; hosts share the stage screen on their own call.
 - Final-swap rule for player 1 is not implemented.

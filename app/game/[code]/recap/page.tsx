@@ -4,6 +4,7 @@ import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import type { PartyGame, Player, Gift, Action } from '@/types'
+import { track } from '@/lib/analytics'
 import { PLAYER_COLUMNS, GIFT_COLUMNS, LOCAL_STORAGE_PLAYER_KEY, LOCAL_STORAGE_TOKEN_KEY } from '@/constants/game'
 
 export default function RecapPage({
@@ -62,6 +63,7 @@ export default function RecapPage({
         map[row.gift_id] = row.delivery_info
       }
       setDelivery(map)
+      if (gameData.status === 'complete') track('recap_viewed')
       setLoading(false)
     }
 

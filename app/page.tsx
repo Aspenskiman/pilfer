@@ -46,7 +46,7 @@ export default function Home() {
       {/* Nav */}
       <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
         <span className="text-2xl font-bold text-[#B8922A]" style={{ fontFamily: 'var(--font-playfair)' }}>
-          Pilfer
+          Pilfer <span className="text-sm font-normal text-white/50">by Jamble</span>
         </span>
         <nav className="flex items-center gap-3 text-sm font-semibold">
           <Link href="/join" className="rounded-lg px-3 py-2 text-white/80 hover:text-white">
@@ -180,7 +180,7 @@ export default function Home() {
           <Link href="/privacy" className="hover:text-white">Privacy</Link>
           <a href={`mailto:${SUPPORT_EMAIL}`} className="hover:text-white">Contact</a>
         </div>
-        <p className="mt-3">© {new Date().getFullYear()} Pilfer</p>
+        <p className="mt-3">Pilfer, the online White Elephant game, by Jamble · © {new Date().getFullYear()} Jamble</p>
       </footer>
     </div>
   )

@@ -37,8 +37,10 @@ export default function PrivacyPage() {
       <section>
         <h2>Services we rely on</h2>
         <p>
-          Supabase (database, sign-in and file storage), Vercel (hosting) and Stripe (payments)
-          process data on our behalf.
+          Pilfer is operated by Jamble. Supabase (database, sign-in and file storage), Vercel
+          (hosting), Stripe (payments), Sentry (error reports) and PostHog (anonymous usage
+          counts, such as how many games are started) process data on our behalf. We do not
+          record your screen or what you type.
         </p>
       </section>
       <section>

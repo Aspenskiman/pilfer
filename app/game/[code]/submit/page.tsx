@@ -4,6 +4,7 @@ import { use, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { submitGift } from '@/app/actions/submitGift'
+import { track } from '@/lib/analytics'
 import { LOCAL_STORAGE_PLAYER_KEY, LOCAL_STORAGE_TOKEN_KEY } from '@/constants/game'
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024
@@ -151,6 +152,7 @@ export default function SubmitGiftPage({
       return
     }
 
+    track('gift_submitted')
     router.push(`/game/${code}`)
   }
 

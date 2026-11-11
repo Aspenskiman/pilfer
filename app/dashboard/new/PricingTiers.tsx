@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { TIERS } from '@/constants/tiers'
 import type { Tier } from '@/types'
+import { track } from '@/lib/analytics'
 
 const PERSONAL = TIERS.filter((t) => t.group === 'personal')
 const TEAM = TIERS.filter((t) => t.group === 'team')
@@ -50,6 +51,7 @@ export default function PricingTiers() {
         return
       }
 
+      track(isFree ? 'game_created' : 'checkout_started', { plan: tier.id })
       if (isFree) {
         router.push(`/dashboard/${data.game_id}`)
       } else if (data.url) {

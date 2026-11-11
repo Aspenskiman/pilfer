@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { joinGame } from '@/app/actions/joinGame'
+import { track } from '@/lib/analytics'
 import { LOCAL_STORAGE_PLAYER_KEY, LOCAL_STORAGE_TOKEN_KEY } from '@/constants/game'
 
 type Game = {
@@ -50,6 +51,7 @@ export default function NameForm({ game, participantCount, forceSpectator = fals
       return
     }
 
+    track('player_joined', { role: result.role })
     localStorage.setItem(LOCAL_STORAGE_PLAYER_KEY, result.player_id)
     localStorage.setItem(LOCAL_STORAGE_TOKEN_KEY, result.session_token)
     router.push(`/game/${game.join_code}`)
