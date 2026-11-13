@@ -10,4 +10,4 @@ export const LOCAL_STORAGE_TOKEN_KEY = 'pilfer_session_token'
 export const PLAYER_COLUMNS =
   'id, game_id, display_name, turn_order, turn_taken, is_active, role, last_seen_at, host_acting, joined_at'
 export const GIFT_COLUMNS =
-  'id, game_id, submitted_by, image_url, gift_name, description, current_holder, steal_count, is_locked, is_opened, created_at'
+  'id, game_id, submitted_by, image_url, gift_name, description, current_holder, steal_count, is_locked, is_opened, submitted_at'

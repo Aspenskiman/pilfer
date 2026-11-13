@@ -28,6 +28,9 @@ alter table public.players add column if not exists last_seen_at timestamptz;
 alter table public.players add column if not exists host_acting boolean not null default false;
 alter table public.players add column if not exists session_token text;
 
+alter table public.party_games add column if not exists started_at timestamptz;
+alter table public.party_games add column if not exists completed_at timestamptz;
+alter table public.gifts add column if not exists submitted_at timestamptz default now();
 alter table public.gifts alter column delivery_info drop not null;
 
 -- One game per Stripe payment (stops duplicate games on webhook retries).
@@ -61,7 +64,19 @@ begin
   end loop;
 end $$;
 
+do $$
+declare r record;
+begin
+  for r in select policyname from pg_policies where schemaname = 'public' and tablename = 'hosts'
+  loop
+    execute format('drop policy %I on public.hosts', r.policyname);
+  end loop;
+end $$;
+
 -- ── 3. Read-only policies ───────────────────────────────────
+create policy "Host reads own row" on public.hosts
+  for select using (auth.uid() = id);
+
 create policy "Host reads own games" on public.party_games
   for select using (auth.uid() = host_id);
 create policy "Anyone reads open games" on public.party_games
@@ -101,7 +116,7 @@ create policy "Trades readable in active games" on public.trades
 
 -- ── 4. Privileges: no client writes, private columns hidden ──
 revoke insert, update, delete, truncate on
-  public.party_games, public.players, public.gifts,
+  public.hosts, public.party_games, public.players, public.gifts,
   public.actions, public.feed_events, public.trades
   from anon, authenticated;
 
@@ -112,7 +127,7 @@ grant select (id, game_id, display_name, turn_order, turn_taken, is_active,
 
 revoke select on public.gifts from anon, authenticated;
 grant select (id, game_id, submitted_by, image_url, gift_name, description,
-              current_holder, steal_count, is_locked, is_opened, created_at)
+              current_holder, steal_count, is_locked, is_opened, submitted_at)
   on public.gifts to anon, authenticated;
 
 -- ── 5. Functions ────────────────────────────────────────────
@@ -295,7 +310,7 @@ begin
 
   update public.party_games
   set status = 'active', current_turn_player_id = v_first.id, round_number = 1,
-      last_stolen_from_id = null, last_stealer_id = null
+      last_stolen_from_id = null, last_stealer_id = null, started_at = now()
   where id = p_game_id;
 
   insert into public.feed_events (game_id, event_type, content)
@@ -323,7 +338,7 @@ begin
   else
     update public.party_games
     set status = 'complete', current_turn_player_id = null,
-        last_stolen_from_id = null, last_stealer_id = null
+        last_stolen_from_id = null, last_stealer_id = null, completed_at = now()
     where id = p_game_id;
 
     insert into public.feed_events (game_id, event_type, content)
@@ -553,5 +568,26 @@ grant execute on function public.pilfer_steal_gift(uuid, uuid, uuid, text) to an
 grant execute on function public.pilfer_react(uuid, uuid, text, text, text) to anon, authenticated;
 grant execute on function public.pilfer_get_delivery(uuid, uuid, text) to anon, authenticated;
 revoke execute on function public.pilfer_start_game(uuid) from public, anon;
+
+-- ── 7. Storage: gift photos ─────────────────────────────────
+-- The bucket is public (photos are viewed by URL), but clients may only
+-- ADD images. They can no longer list, overwrite or delete other files.
+do $$
+declare r record;
+begin
+  for r in select policyname from pg_policies where schemaname = 'storage' and tablename = 'objects'
+  loop
+    execute format('drop policy %I on storage.objects', r.policyname);
+  end loop;
+end $$;
+
+create policy "Anyone can add a gift photo" on storage.objects
+  for insert to anon, authenticated
+  with check (bucket_id = 'gift-images');
+
+update storage.buckets
+set file_size_limit = 8388608,
+    allowed_mime_types = array['image/jpeg','image/png','image/webp','image/gif','image/heic','image/heif']
+where id = 'gift-images';
 
 commit;

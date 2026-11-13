@@ -6,14 +6,11 @@ browser yet — the rehearsal in step 6 is the first real test.
 ## Order matters
 
 1. **Back up** — Supabase dashboard → Database → Backups (or export the 7 tables).
-2. **Run the migration** — paste `supabase/migrations/004_launch_hardening.sql`
-   into the Supabase SQL editor and run it once. It must succeed before the
-   new code is deployed (the code calls functions and a `plan` column it adds).
-   - If it stops on `party_games_stripe_payment_id_key`, delete duplicate test
-     rows that share a `stripe_payment_id` and run it again.
-3. **Storage bucket** — Storage → `gift-images` must exist and be public, with
-   a policy allowing uploads. Set a file size limit (8 MB) and restrict MIME
-   types to `image/*` in the bucket settings.
+2. **Migration — DONE Nov 13, 2026.** `004_launch_hardening.sql` was applied to
+   the `jamble` Supabase project and verified with a rolled-back self-test
+   (join cap, forged tokens, turn order, steal-back, delivery privacy).
+3. **Storage bucket — DONE.** `gift-images` is upload-only for clients, 8 MB
+   limit, images only.
 4. **Environment variables (Vercel → Settings → Environment Variables)**
    - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
    - `NEXT_PUBLIC_SITE_URL` = the real https domain (no trailing slash)

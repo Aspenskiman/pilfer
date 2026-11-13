@@ -45,14 +45,14 @@ export type Gift = {
   id: string
   game_id: string
   submitted_by: string
-  image_url: string
+  image_url: string | null
   gift_name: string
   description: string | null
   current_holder: string | null
   steal_count: number
   is_locked: boolean
   is_opened: boolean
-  created_at: string
+  submitted_at: string | null
 }
 
 export type Action = {
