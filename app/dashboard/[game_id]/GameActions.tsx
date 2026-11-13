@@ -136,11 +136,30 @@ export default function GameActions({ gameId, joinCode, status, gameDate }: Prop
         )}
       </div>
 
-      {/* QR code */}
+      {/* QR code + what to do next */}
       {(status === 'invited' || status === 'active') && joinUrl && (
-        <div className="flex flex-col items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900 p-6">
-          <QRCodeSVG value={joinUrl} size={180} />
-          <p className="text-sm text-zinc-400">Scan to join</p>
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6 space-y-5">
+          <div className="flex flex-col items-center gap-2">
+            <div className="rounded-lg bg-white p-3">
+              <QRCodeSVG value={joinUrl} size={180} />
+            </div>
+            <p className="text-sm text-zinc-400">Guests scan this, or use the join link below</p>
+          </div>
+
+          {status === 'invited' && (
+            <ol className="space-y-2 text-sm text-zinc-300 list-decimal pl-5">
+              <li>Send the join link to your guests. Each one enters a name and adds a gift.</li>
+              <li>Join yourself from your phone too if you are playing.</li>
+              <li>Open the waiting room to watch people arrive, then press Start Game.</li>
+            </ol>
+          )}
+
+          <a
+            href={`/game/${joinCode}`}
+            className="block w-full rounded-lg bg-[#B8922A] px-4 py-3 text-center font-semibold text-white transition hover:opacity-90"
+          >
+            {status === 'active' ? 'Go to the game' : 'Open the waiting room'}
+          </a>
         </div>
       )}
 
