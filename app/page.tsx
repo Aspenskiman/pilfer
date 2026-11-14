@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { TIERS } from '@/constants/tiers'
 import { SUPPORT_EMAIL } from '@/constants/site'
@@ -45,9 +46,12 @@ export default function Home() {
     <div className="min-h-screen bg-[#1A2B4A] text-white">
       {/* Nav */}
       <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-        <span className="text-2xl font-bold text-[#B8922A]" style={{ fontFamily: 'var(--font-playfair)' }}>
-          Pilfer <span className="text-sm font-normal text-white/50">by Jamble</span>
-        </span>
+        <Link href="/" className="flex items-center gap-3">
+          <Image src="/pilfer-logo.png" alt="" width={44} height={44} priority className="h-11 w-11" />
+          <span className="text-2xl font-bold text-[#B8922A]" style={{ fontFamily: 'var(--font-playfair)' }}>
+            Pilfer <span className="text-sm font-normal text-white/50">by Jamble</span>
+          </span>
+        </Link>
         <nav className="flex items-center gap-3 text-sm font-semibold">
           <Link href="/join" className="rounded-lg px-3 py-2 text-white/80 hover:text-white">
             Join a game
@@ -63,6 +67,14 @@ export default function Home() {
 
       {/* Hero */}
       <section className="mx-auto max-w-3xl px-6 pb-16 pt-12 text-center">
+        <Image
+          src="/pilfer-logo.png"
+          alt="Pilfer logo: a white elephant dressed as a burglar, carrying a loot bag"
+          width={160}
+          height={160}
+          priority
+          className="mx-auto mb-8 h-32 w-32 sm:h-40 sm:w-40"
+        />
         <h1
           className="text-4xl font-bold leading-tight sm:text-6xl"
           style={{ fontFamily: 'var(--font-playfair)' }}
