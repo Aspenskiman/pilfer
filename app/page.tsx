@@ -49,12 +49,13 @@ const OCCASIONS = [
   {
     paper: 'pf-wrap-check',
     title: 'Friends, any excuse',
-    body: 'Game night, Friendsgiving, a regift purge in January. Ten players are free.',
+    body: 'Game night, Friendsgiving, a regift purge in January. Five players are free.',
   },
 ]
 
 const FAQ = [
   ['Do players need an account?', 'No. Only the host signs up. Players join with a link or code and a name.'],
+  ['Can I try it before hosting?', 'Yes. The demo is a short game against four computer players. No account needed.'],
   ['Do players ever pay?', 'Never. The host picks a plan for the game; players and spectators are always free.'],
   ['Are the gifts real?', 'Yes, players bring their own. Each player says how the winner will receive the gift (a link, a hand-off, a gift card). Pilfer does not sell or ship gifts.'],
   ['What if someone drops off mid-game?', 'The host can take a turn on behalf of any player from the stage screen, so the game keeps moving.'],
@@ -97,12 +98,15 @@ export default function Home() {
               <Link href="/signup" className="pf-btn pf-btn-lg pf-btn-loot">
                 Host a free game
               </Link>
-              <Link href="/join" className="pf-btn pf-btn-lg pf-btn-ghost">
-                I have a join code
+              <Link href="/demo" className="pf-btn pf-btn-lg pf-btn-tusk">
+                Play the demo
               </Link>
             </div>
             <p className="mt-5 text-sm font-medium text-tusk/60">
-              Free for up to 10 players. No app to install, no card needed.
+              Free for up to 5 players. No app to install, no card needed.
+              <Link href="/join" className="pf-link mt-1 block w-fit text-tusk/80 hover:text-tusk">
+                Have a join code?
+              </Link>
             </p>
           </div>
 
@@ -225,7 +229,7 @@ export default function Home() {
         </p>
 
         <h3 className="mt-10 text-xl font-extrabold text-tusk">Friends and family</h3>
-        <div className="mt-4 grid gap-5 md:grid-cols-3">
+        <div className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
           {personal.map((t) => (
             <Ticket key={t.id} label={t.label} players={t.players} price={t.price} paid={t.priceInCents != null} />
           ))}
@@ -273,9 +277,14 @@ export default function Home() {
               Set up a game in a couple of minutes and send one link.
             </p>
           </div>
-          <Link href="/signup" className="pf-btn pf-btn-lg pf-btn-red shrink-0">
-            Host a free game
-          </Link>
+          <div className="flex shrink-0 flex-col gap-3">
+            <Link href="/signup" className="pf-btn pf-btn-lg pf-btn-red">
+              Host a free game
+            </Link>
+            <Link href="/demo" className="pf-btn pf-btn-plain">
+              Play the demo first
+            </Link>
+          </div>
         </div>
       </section>
 

@@ -50,7 +50,7 @@ export default function SignupPage() {
     <CenteredCard>
       <h1 className="pf-display pr-20 text-4xl sm:text-5xl">Host a game</h1>
       <p className="mt-3 text-ink/70">
-        Create a host account to run your gift swap. Games with up to 10 players are free.
+        Create a host account to run your gift swap. Games with up to 5 players are free.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-7 space-y-5">

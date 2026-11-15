@@ -27,7 +27,7 @@ export default function TermsPage() {
       <section>
         <h2>Plans and payment</h2>
         <ul>
-          <li>Free games allow up to 10 players. Paid plans are a one-time price per game.</li>
+          <li>Free games allow up to 5 players. Paid plans are a one-time price per game.</li>
           <li>Friends &amp; family plans are for non-commercial use. Companies and other organizations should choose a Work &amp; organizations plan.</li>
           <li>Payments are processed by Stripe. We do not see or store card numbers.</li>
         </ul>

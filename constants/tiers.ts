@@ -2,18 +2,29 @@ import { Tier } from '@/types'
 
 // Single source of truth for pricing. The checkout route, the webhook and the
 // pricing UI all read from here — change a price in one place only.
-export const FREE_PLAYER_LIMIT = 10
+export const FREE_PLAYER_LIMIT = 5
 
 export const TIERS: Tier[] = [
   {
     id: 'free',
     group: 'personal',
     label: 'The Taster',
-    players: 'Up to 10 players',
+    players: 'Up to 5 players',
     playerLimit: FREE_PLAYER_LIMIT,
     price: 'Free',
     priceInCents: null,
     cta: 'Start for free',
+    highlight: false,
+  },
+  {
+    id: 'personal_10',
+    group: 'personal',
+    label: 'The Huddle',
+    players: 'Up to 10 players',
+    playerLimit: 10,
+    price: '$9',
+    priceInCents: 900,
+    cta: 'Choose The Huddle',
     highlight: false,
   },
   {
@@ -62,7 +73,7 @@ export const TIERS: Tier[] = [
   },
 ]
 
-export const PAID_TIER_IDS = ['personal_25', 'personal_50', 'team_25', 'team_50'] as const
+export const PAID_TIER_IDS = ['personal_10', 'personal_25', 'personal_50', 'team_25', 'team_50'] as const
 export type PaidTierId = (typeof PAID_TIER_IDS)[number]
 
 export const TIER_MAP: Record<string, Tier> = Object.fromEntries(TIERS.map((t) => [t.id, t]))

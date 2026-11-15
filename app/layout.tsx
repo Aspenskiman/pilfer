@@ -29,11 +29,11 @@ export const metadata: Metadata = {
     template: "%s · Pilfer by Jamble",
   },
   description:
-    "Host a live White Elephant gift exchange online. Everyone plays from their phone, the big screen shows every steal. Free for up to 10 players.",
+    "Host a live White Elephant gift exchange online. Everyone plays from their phone, the big screen shows every steal. Free for up to 5 players.",
   openGraph: {
     title: "Pilfer, the online White Elephant game, by Jamble",
     description:
-      "Open, steal, lock. A live White Elephant game for friends, families and teams. Free for up to 10 players.",
+      "Open, steal, lock. A live White Elephant game for friends, families and teams. Free for up to 5 players.",
     type: "website",
   },
 };

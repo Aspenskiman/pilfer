@@ -48,7 +48,7 @@ export const UpdateGameSchema = z.object({
 })
 
 export const CheckoutSchema = z.object({
-  tier: z.enum(['personal_25', 'personal_50', 'team_25', 'team_50']),
+  tier: z.enum(['personal_10', 'personal_25', 'personal_50', 'team_25', 'team_50']),
   game_name: GameNameSchema,
   game_date: z.string().datetime({ offset: true }),
 })

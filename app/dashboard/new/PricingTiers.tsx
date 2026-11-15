@@ -165,7 +165,7 @@ export default function PricingTiers() {
             </p>
           )}
 
-          <div className={`mt-6 grid gap-6 ${tiers.length === 3 ? 'md:grid-cols-3' : 'max-w-2xl md:grid-cols-2'}`}>
+          <div className={`mt-6 grid gap-6 ${tiers.length >= 4 ? 'sm:grid-cols-2 xl:grid-cols-4' : tiers.length === 3 ? 'md:grid-cols-3' : 'max-w-2xl md:grid-cols-2'}`}>
             {tiers.map((tier) => (
               <div
                 key={tier.id}
