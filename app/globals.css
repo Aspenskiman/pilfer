@@ -7,8 +7,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-display-face), var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-body), "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display-face), "Bagel Fat One", var(--font-body), ui-sans-serif, system-ui, sans-serif;
   --color-midnight: var(--pf-midnight);
   --color-alley: var(--pf-alley);
   --color-tusk: var(--pf-tusk);
@@ -594,5 +594,539 @@
   }
   .pf-btn {
     transition: none;
+  }
+}
+
+/* ───────────────────────── Landing page, second pass ─────────────────────────
+   The first pass gave Pilfer a look. This pass shows the party: a scripted
+   round of the game in the hero, bright paper sections to break up the night,
+   and wrapping paper as the festive texture. */
+
+:root {
+  --pf-grape: #8b7bff;
+  --pf-tangerine: #ff9a5a;
+}
+
+@layer components {
+  /* A bright full-width section on ivory paper */
+  .pf-sheet {
+    background: var(--pf-tusk);
+    color: var(--pf-ink);
+    border-top: 3px solid var(--pf-ink);
+    border-bottom: 3px solid var(--pf-ink);
+  }
+
+  /* One of the three moves: a big coloured sticker with a drawing */
+  .pf-move {
+    display: flex;
+    flex-direction: column;
+    border: 3px solid var(--pf-ink);
+    border-radius: 1.75rem;
+    box-shadow: 0 7px 0 0 var(--pf-ink);
+    color: var(--pf-ink);
+    overflow: hidden;
+  }
+  .pf-move-art {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 17rem;
+    border-bottom: 3px solid var(--pf-ink);
+    background-color: var(--pf-midnight);
+  }
+  /* Each drawing sits on the night sky under its own coloured light */
+  .pf-move-art-mint {
+    background-image: radial-gradient(ellipse at 50% 60%, rgb(79 224 181 / 0.42), transparent 68%);
+  }
+  .pf-move-art-red {
+    background-image: radial-gradient(ellipse at 50% 60%, rgb(255 79 100 / 0.42), transparent 68%);
+  }
+  .pf-move-art-loot {
+    background-image: radial-gradient(ellipse at 50% 60%, rgb(245 184 65 / 0.42), transparent 68%);
+  }
+
+  /* Rendered presents: a soft contact shadow so they sit on any surface */
+  .pf-gift {
+    filter: drop-shadow(0 6px 6px rgb(0 0 0 / 0.35));
+    user-select: none;
+  }
+
+  /* Wrapping papers, used as swatches for the occasions */
+  .pf-wrap {
+    position: relative;
+    border: 3px solid var(--pf-ink);
+    border-radius: 1.5rem;
+    min-height: 17rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 1rem;
+  }
+  /* the ribbon */
+  .pf-wrap::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 2.1rem;
+    width: 1.5rem;
+    background: var(--wrap-ribbon, var(--pf-loot));
+    border-left: 3px solid var(--pf-ink);
+    border-right: 3px solid var(--pf-ink);
+  }
+  .pf-wrap-dots {
+    --wrap-ribbon: var(--pf-loot);
+    background-color: var(--pf-redhanded);
+    background-image: radial-gradient(circle, rgb(255 255 255 / 0.6) 0 5px, transparent 5.5px);
+    background-size: 34px 34px;
+  }
+  .pf-wrap-stripes {
+    --wrap-ribbon: var(--pf-redhanded);
+    background-image: repeating-linear-gradient(135deg, var(--pf-mint) 0 16px, #2fb890 16px 32px);
+  }
+  .pf-wrap-confetti {
+    --wrap-ribbon: var(--pf-mint);
+    background-color: var(--pf-grape);
+    background-image:
+      radial-gradient(circle, var(--pf-loot) 0 4px, transparent 4.5px),
+      radial-gradient(circle, var(--pf-tusk) 0 3px, transparent 3.5px),
+      radial-gradient(circle, var(--pf-redhanded) 0 3.5px, transparent 4px);
+    background-size: 46px 46px, 38px 38px, 58px 58px;
+    background-position: 6px 10px, 24px 30px, 34px 4px;
+  }
+  .pf-wrap-check {
+    --wrap-ribbon: var(--pf-grape);
+    background-color: var(--pf-loot);
+    background-image:
+      linear-gradient(rgb(255 154 90 / 0.75) 50%, transparent 50%),
+      linear-gradient(90deg, rgb(255 154 90 / 0.75) 50%, transparent 50%);
+    background-size: 36px 36px;
+  }
+  .pf-wrap-tag {
+    position: relative;
+    align-self: flex-start;
+    max-width: 100%;
+    background: var(--pf-tusk);
+    color: var(--pf-ink);
+    border: 3px solid var(--pf-ink);
+    border-radius: 1rem;
+    padding: 0.7rem 0.9rem;
+    box-shadow: 0 4px 0 0 var(--pf-ink);
+  }
+
+  /* ── The scripted round in the hero (StageDemo.tsx) ── */
+  .pfd {
+    container-type: inline-size;
+    width: 100%;
+  }
+  .pfd-root {
+    --u: calc(100cqw / 560);
+    position: relative;
+    padding: 0 calc(var(--u) * 34) calc(var(--u) * 46) 0;
+    font-size: calc(var(--u) * 13);
+    line-height: 1.2;
+  }
+  .pfd-screen {
+    position: relative;
+    overflow: hidden;
+    background: var(--pf-alley);
+    color: var(--pf-tusk);
+    border: 3px solid var(--pf-ink);
+    border-radius: calc(var(--u) * 22);
+    box-shadow: calc(var(--u) * 10) calc(var(--u) * 10) 0 0 var(--pf-loot);
+  }
+  .pfd-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: calc(var(--u) * 12);
+    padding: calc(var(--u) * 10) calc(var(--u) * 16);
+    background: var(--pf-loot);
+    color: var(--pf-ink);
+    border-bottom: 3px solid var(--pf-ink);
+  }
+  .pfd-upnow {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--u) * 10);
+  }
+  .pfd-kicker {
+    font-size: calc(var(--u) * 11);
+    font-weight: 800;
+    opacity: 0.7;
+  }
+  .pfd-name {
+    font-family: var(--font-display);
+    font-size: calc(var(--u) * 28);
+    line-height: 1;
+  }
+  .pfd-deck {
+    text-align: right;
+  }
+  .pfd-deck-name {
+    font-size: calc(var(--u) * 16);
+    font-weight: 800;
+  }
+  .pfd-face {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 2px solid var(--pf-ink);
+    color: var(--pf-ink);
+    font-family: var(--font-display);
+    line-height: 1;
+  }
+  .pfd-face-lg {
+    width: calc(var(--u) * 40);
+    height: calc(var(--u) * 40);
+    font-size: calc(var(--u) * 20);
+    animation: pf-pop 0.3s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+  }
+  .pfd-face-sm {
+    width: calc(var(--u) * 16);
+    height: calc(var(--u) * 16);
+    font-size: calc(var(--u) * 9);
+    border-width: 1.5px;
+  }
+  .pfd-body {
+    padding: calc(var(--u) * 14) calc(var(--u) * 16) calc(var(--u) * 16);
+  }
+  .pfd-label {
+    font-size: calc(var(--u) * 12);
+    font-weight: 800;
+    color: rgb(255 247 232 / 0.6);
+    margin-bottom: calc(var(--u) * 6);
+  }
+  .pfd-wrapped {
+    display: flex;
+    gap: calc(var(--u) * 10);
+    height: calc(var(--u) * 66);
+    margin-bottom: calc(var(--u) * 12);
+  }
+  .pfd-box {
+    width: calc(var(--u) * 64);
+    height: calc(var(--u) * 64);
+  }
+  .pfd-tilt-l {
+    transform: rotate(-4deg);
+  }
+  .pfd-tilt-r {
+    transform: rotate(4deg);
+  }
+  .pfd-cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: calc(var(--u) * 8);
+    width: calc(var(--u) * 356);
+    min-height: calc(var(--u) * 140);
+    align-content: start;
+  }
+  .pfd-card {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--u) * 8);
+    min-width: 0;
+    padding: calc(var(--u) * 6);
+    background: var(--pf-tusk);
+    color: var(--pf-ink);
+    border: 2.5px solid var(--pf-ink);
+    border-radius: calc(var(--u) * 14);
+    transition: box-shadow 200ms ease, transform 200ms ease;
+  }
+  .pfd-card-new {
+    animation: pfd-reveal 0.55s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+  }
+  .pfd-card-hot {
+    box-shadow: calc(var(--u) * 4) calc(var(--u) * 4) 0 0 var(--pf-redhanded);
+    transform: rotate(-2deg);
+  }
+  .pfd-card-lock {
+    box-shadow: calc(var(--u) * 4) calc(var(--u) * 4) 0 0 var(--pf-loot);
+  }
+  .pfd-tile {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: calc(var(--u) * 50);
+    height: calc(var(--u) * 50);
+    border: 2px solid var(--pf-ink);
+    border-radius: calc(var(--u) * 10);
+    overflow: hidden;
+  }
+  .pfd-prize {
+    width: 88%;
+    height: 88%;
+    object-fit: contain;
+  }
+  .pfd-card-text {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--u) * 3);
+    min-width: 0;
+  }
+  .pfd-card-name {
+    font-weight: 800;
+    font-size: calc(var(--u) * 13);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pfd-card-holder {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--u) * 4);
+    font-size: calc(var(--u) * 11);
+    font-weight: 700;
+    color: rgb(12 12 23 / 0.65);
+  }
+  .pfd-dots {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--u) * 3);
+  }
+  .pfd-dots i {
+    width: calc(var(--u) * 8);
+    height: calc(var(--u) * 8);
+    border-radius: 999px;
+    border: 1.5px solid var(--pf-ink);
+    background: #fff;
+  }
+  .pfd-dots i.on {
+    background: var(--pf-redhanded);
+  }
+  .pfd-dots b {
+    margin-left: calc(var(--u) * 3);
+    padding: 0 calc(var(--u) * 5);
+    border: 1.5px solid var(--pf-ink);
+    border-radius: 999px;
+    background: var(--pf-loot);
+    font-size: calc(var(--u) * 9.5);
+    font-weight: 800;
+  }
+  .pfd-feed {
+    display: inline-block;
+    max-width: calc(var(--u) * 356);
+    margin-top: calc(var(--u) * 12);
+    padding: calc(var(--u) * 6) calc(var(--u) * 11);
+    border-radius: 999px;
+    border: 2px solid rgb(255 247 232 / 0.25);
+    font-size: calc(var(--u) * 12);
+    font-weight: 700;
+    animation: pf-pop 0.3s ease both;
+  }
+  .pfd-feed-open {
+    background: rgb(79 224 181 / 0.18);
+    border-color: rgb(79 224 181 / 0.6);
+  }
+  .pfd-feed-steal {
+    background: rgb(255 79 100 / 0.28);
+    border-color: rgb(255 79 100 / 0.8);
+  }
+  .pfd-feed-lock {
+    background: rgb(245 184 65 / 0.22);
+    border-color: rgb(245 184 65 / 0.8);
+  }
+  .pfd-shout-wrap {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    padding-left: calc(var(--u) * 40);
+    background: rgb(12 12 23 / 0.45);
+    animation: pfd-shout 3s ease both;
+    pointer-events: none;
+  }
+  .pfd-shout {
+    width: calc(var(--u) * 290);
+    overflow: hidden;
+    text-align: center;
+    background: var(--pf-redhanded);
+    color: var(--pf-ink);
+    border: 3px solid var(--pf-ink);
+    border-radius: calc(var(--u) * 20);
+    box-shadow: calc(var(--u) * 7) calc(var(--u) * 7) 0 0 var(--pf-tusk);
+    transform: rotate(-3deg);
+  }
+  .pfd-shout-lock {
+    background: var(--pf-loot);
+  }
+  .pfd-shout-band {
+    height: calc(var(--u) * 14);
+    background-size: auto calc(var(--u) * 7);
+    border-bottom: 3px solid var(--pf-ink);
+  }
+  .pfd-shout-word {
+    font-family: var(--font-display);
+    font-size: calc(var(--u) * 54);
+    line-height: 1;
+    padding-top: calc(var(--u) * 12);
+  }
+  .pfd-shout-text {
+    padding: calc(var(--u) * 6) calc(var(--u) * 16) calc(var(--u) * 16);
+    font-size: calc(var(--u) * 14);
+    font-weight: 800;
+  }
+
+  .pfd-phone {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: calc(var(--u) * 172);
+    height: calc(var(--u) * 318);
+    padding: calc(var(--u) * 7);
+    background: var(--pf-ink);
+    border-radius: calc(var(--u) * 30);
+    box-shadow: calc(var(--u) * -6) calc(var(--u) * 8) 0 0 rgb(12 12 23 / 0.45);
+    transform: rotate(5deg);
+  }
+  .pfd-notch {
+    position: absolute;
+    top: calc(var(--u) * 13);
+    left: 50%;
+    width: calc(var(--u) * 46);
+    height: calc(var(--u) * 9);
+    margin-left: calc(var(--u) * -23);
+    border-radius: 999px;
+    background: var(--pf-ink);
+    z-index: 1;
+  }
+  .pfd-phone-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: calc(var(--u) * 9);
+    height: 100%;
+    padding: calc(var(--u) * 26) calc(var(--u) * 12) calc(var(--u) * 14);
+    border-radius: calc(var(--u) * 24);
+    background: var(--pf-tusk);
+    color: var(--pf-ink);
+    text-align: center;
+    animation: pfd-phone-in 0.35s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+  }
+  .pfd-phone-2 {
+    background: var(--pf-redhanded);
+  }
+  .pfd-phone-3 {
+    background: var(--pf-loot);
+  }
+  .pfd-phone-title {
+    font-family: var(--font-display);
+    font-size: calc(var(--u) * 23);
+    line-height: 1.02;
+    text-wrap: balance;
+  }
+  .pfd-phone-small {
+    font-size: calc(var(--u) * 12);
+    font-weight: 700;
+    opacity: 0.75;
+    text-wrap: balance;
+  }
+  .pfd-phone-tile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(var(--u) * 84);
+    height: calc(var(--u) * 84);
+    border: 2.5px solid var(--pf-ink);
+    border-radius: calc(var(--u) * 18);
+    font-size: calc(var(--u) * 46);
+    line-height: 1;
+  }
+  .pfd-phone-btn {
+    width: 100%;
+    padding: calc(var(--u) * 9) 0;
+    border: 2.5px solid var(--pf-ink);
+    border-radius: calc(var(--u) * 12);
+    box-shadow: 0 calc(var(--u) * 3) 0 0 var(--pf-ink);
+    font-size: calc(var(--u) * 13);
+    font-weight: 800;
+  }
+  .pfd-phone-btn-loot {
+    background: var(--pf-loot);
+  }
+  .pfd-phone-btn-red {
+    background: var(--pf-redhanded);
+  }
+  .pfd-phone-btn-tusk {
+    background: var(--pf-tusk);
+  }
+  .pfd-phone-btn-ink {
+    background: var(--pf-ink);
+    color: var(--pf-tusk);
+    box-shadow: 0 calc(var(--u) * 3) 0 0 rgb(12 12 23 / 0.4);
+  }
+
+  /* In-game: a newly opened gift lands on the stage */
+  .pf-reveal {
+    animation: pfd-reveal 0.6s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+  }
+  /* In-game: the table the wrapped gifts sit on */
+  .pf-table {
+    border-radius: 1.5rem;
+    padding: 1.25rem 1.25rem 1rem;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgb(245 184 65 / 0.22), transparent 70%),
+      rgb(255 247 232 / 0.05);
+    border: 2px solid rgb(255 247 232 / 0.12);
+  }
+}
+
+@keyframes pfd-reveal {
+  0% {
+    transform: scale(0.3) rotate(-14deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.08) rotate(3deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+@keyframes pfd-shout {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  9% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+  14%,
+  88% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+@keyframes pfd-phone-in {
+  from {
+    transform: translateY(8%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pfd-face-lg,
+  .pfd-card-new,
+  .pfd-feed,
+  .pfd-shout-wrap,
+  .pfd-phone-screen,
+  .pf-reveal {
+    animation: none;
   }
 }

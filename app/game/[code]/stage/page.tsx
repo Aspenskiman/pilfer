@@ -335,19 +335,21 @@ export default function StagePage({
       <div className="w-3/5 flex flex-col overflow-hidden border-r-2 border-tusk/10">
 
         {/* Turn bar */}
-        <div className="px-6 py-4 bg-alley border-b-[3px] border-ink flex items-center justify-between gap-6 shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
-            {currentTurnPlayer && <Avatar name={currentTurnPlayer.display_name} size={52} />}
+        <div className="px-6 py-4 bg-loot text-ink border-b-[3px] border-ink flex items-center justify-between gap-6 shrink-0">
+          <div className="flex items-center gap-4 min-w-0">
+            {currentTurnPlayer && (
+              <Avatar key={currentTurnPlayer.id} name={currentTurnPlayer.display_name} size={64} className="pf-pop !bg-tusk" />
+            )}
             <div className="min-w-0">
-              <p className="text-sm font-bold text-loot">Up now</p>
-              <p className="pf-display truncate text-4xl text-tusk">
+              <p className="text-base font-extrabold text-ink/70">Up now</p>
+              <p className="pf-display truncate text-5xl text-ink">
                 {currentTurnPlayer?.display_name ?? 'Nobody yet'}
               </p>
             </div>
           </div>
           <div className="text-right shrink-0">
-            <p className="text-sm font-bold text-tusk/50">On deck</p>
-            <p className="text-xl font-extrabold text-tusk/85">
+            <p className="text-base font-extrabold text-ink/70">On deck</p>
+            <p className="text-2xl font-extrabold text-ink">
               {onDeckPlayer?.display_name ?? 'Last turn'}
             </p>
           </div>
@@ -382,17 +384,17 @@ export default function StagePage({
 
           {/* Wrapped gifts */}
           {wrappedGifts.length > 0 && (
-            <section>
+            <section className="pf-table">
               <h3 className="text-lg font-extrabold text-tusk/70 mb-3">
                 {wrappedGifts.length} still wrapped
               </h3>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-4">
                 {wrappedGifts.map((gift, index) => (
                   <div
                     key={gift.id}
                     className="relative flex flex-col items-center select-none"
                   >
-                    <GiftBox seed={index} size={96} className={index % 2 === 0 ? '-rotate-3' : 'rotate-3'} />
+                    <GiftBox seed={index} size={112} className={index % 2 === 0 ? '-rotate-3' : 'rotate-3'} />
                     <span className="text-xs font-bold text-tusk/55 mt-1">Gift {index + 1}</span>
                   </div>
                 ))}
@@ -410,7 +412,7 @@ export default function StagePage({
                 {openedGifts.map((gift) => (
                   <div
                     key={gift.id}
-                    className={`relative rounded-2xl bg-tusk text-ink border-[3px] border-ink overflow-hidden ${
+                    className={`pf-reveal relative rounded-2xl bg-tusk text-ink border-[3px] border-ink overflow-hidden ${
                       gift.is_locked ? 'shadow-[5px_5px_0_0_var(--pf-loot)]' : ''
                     }`}
                   >
