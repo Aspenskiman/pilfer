@@ -1,4 +1,6 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase-server'
+import { StatusScreen } from '@/components/brand/Shell'
 import NameForm from './NameForm'
 
 export default async function JoinCodePage({
@@ -17,34 +19,32 @@ export default async function JoinCodePage({
 
   if (!game) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-950 px-4">
-        <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold text-white">Game not found</h1>
-          <p className="text-zinc-400">This join link isn&apos;t valid.</p>
-        </div>
-      </div>
+      <StatusScreen
+        title="Game not found"
+        action={
+          <Link href="/join" className="pf-btn pf-btn-loot">
+            Enter a different code
+          </Link>
+        }
+      >
+        <p>This join link isn&apos;t valid. Check the code with your host.</p>
+      </StatusScreen>
     )
   }
 
   if (game.status === 'setup') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-950 px-4">
-        <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold text-white">Game not open yet</h1>
-          <p className="text-zinc-400">Ask your host to open the game for joining.</p>
-        </div>
-      </div>
+      <StatusScreen title="Not open yet">
+        <p>Ask your host to open the game for joining, then reload this page.</p>
+      </StatusScreen>
     )
   }
 
   if (game.status === 'complete') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-950 px-4">
-        <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold text-white">Game has ended</h1>
-          <p className="text-zinc-400">This game is already over.</p>
-        </div>
-      </div>
+      <StatusScreen title="This game has ended">
+        <p>The gifts have all found a home.</p>
+      </StatusScreen>
     )
   }
 

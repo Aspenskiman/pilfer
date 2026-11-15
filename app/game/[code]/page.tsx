@@ -1,7 +1,6 @@
 'use client'
 
 import { use, useEffect, useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { useGameState } from '@/hooks/useGameState'
@@ -9,6 +8,8 @@ import { usePlayers } from '@/hooks/usePlayers'
 import { useGifts } from '@/hooks/useGifts'
 import { useCurrentPlayer } from '@/hooks/useCurrentPlayer'
 import { track } from '@/lib/analytics'
+import { StatusScreen } from '@/components/brand/Shell'
+import WaitingRoom from './WaitingRoom'
 
 export default function GamePage({
   params,
@@ -54,7 +55,7 @@ export default function GamePage({
   const game = useGameState(gameId)
   const players = usePlayers(gameId)
   const gifts = useGifts(gameId)
-  const { currentPlayer, currentPlayerId } = useCurrentPlayer(players)
+  const { currentPlayerId } = useCurrentPlayer(players)
 
   // Auto-redirect on status change
   useEffect(() => {
@@ -112,110 +113,31 @@ export default function GamePage({
 
   if (notFound) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-950 px-4">
-        <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold text-white">Game not found</h1>
-          <p className="text-zinc-400">This game doesn&apos;t exist or has ended.</p>
-        </div>
-      </div>
+      <StatusScreen title="Game not found">
+        <p>This game doesn&apos;t exist or has ended.</p>
+      </StatusScreen>
     )
   }
 
   if (!game) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-        <p className="text-zinc-500">Loading…</p>
-      </div>
-    )
+    return <StatusScreen title="Loading…" />
   }
 
   // Lobby — waiting room
   return (
-    <div className="min-h-screen bg-zinc-950 px-4 py-16">
-      <div className="mx-auto max-w-md space-y-8">
-        <div className="text-center">
-          <p className="text-sm font-medium uppercase tracking-widest text-zinc-500">
-            {isHost ? 'Host view — ' : ''}Waiting room
-          </p>
-          <h1 className="mt-2 text-3xl font-bold text-white">{game.game_name}</h1>
-          <p className="mt-2 font-mono text-2xl font-bold tracking-widest text-zinc-400">
-            {game.join_code}
-          </p>
-        </div>
-
-        {alreadySubmitted && (
-          <div className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-center text-sm text-zinc-300">
-            You&apos;ve already submitted your gift.
-          </div>
-        )}
-
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
-          <p className="mb-4 text-sm font-medium text-zinc-400">
-            {players.length} {players.length === 1 ? 'player' : 'players'} joined
-          </p>
-
-          <ul className="space-y-2">
-            {players.map((player) => {
-              const isMe = player.id === currentPlayerId
-              const hasSubmitted = submittedIds.has(player.id)
-
-              return (
-                <li
-                  key={player.id}
-                  className="flex items-center justify-between rounded-lg bg-zinc-800 px-4 py-3"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-white">{player.display_name}</span>
-                    {isMe && <span className="text-xs text-zinc-500">(you)</span>}
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    {isMe && !hasSubmitted && (
-                      <Link
-                        href={`/game/${game.join_code}/submit`}
-                        className="rounded-md bg-white px-3 py-1 text-xs font-semibold text-zinc-950 transition hover:bg-zinc-200"
-                      >
-                        Submit Gift
-                      </Link>
-                    )}
-                    <span
-                      className={`text-lg ${hasSubmitted ? 'text-green-500' : ''}`}
-                      title={hasSubmitted ? 'Submitted' : 'Pending'}
-                    >
-                      {hasSubmitted ? '✓' : '⏳'}
-                    </span>
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
-
-          {players.length === 0 && (
-            <p className="text-center text-sm text-zinc-600">
-              No players yet — share the join code!
-            </p>
-          )}
-        </div>
-
-        {/* Host-only: Start Game */}
-        {isHost && (
-          <div className="space-y-2">
-            <button
-              onClick={handleStartGame}
-              disabled={startingGame || players.length === 0}
-              className="w-full rounded-lg bg-white px-4 py-3 font-semibold text-zinc-950 transition hover:bg-zinc-200 disabled:opacity-40"
-            >
-              {startingGame ? 'Starting…' : 'Start Game'}
-            </button>
-            {startError && <p className="text-center text-sm text-red-400">{startError}</p>}
-            {!allSubmitted && players.length > 0 && (
-              <p className="text-center text-xs text-zinc-500">
-                Not everyone has submitted yet — you can still start.
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
+    <WaitingRoom
+      gameName={game.game_name}
+      joinCode={game.join_code}
+      players={players}
+      submittedIds={submittedIds}
+      giftCount={gifts.length}
+      currentPlayerId={currentPlayerId}
+      isHost={isHost}
+      alreadySubmitted={alreadySubmitted}
+      allSubmitted={allSubmitted}
+      startingGame={startingGame}
+      startError={startError}
+      onStart={handleStartGame}
+    />
   )
 }

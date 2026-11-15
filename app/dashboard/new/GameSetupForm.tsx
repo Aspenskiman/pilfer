@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { THEMES, DEFAULT_THEME } from '@/constants/themes'
+import { PageShell, TopBar } from '@/components/brand/Shell'
 
 function toDatetimeLocal(isoString: string): string {
   const d = new Date(isoString)
@@ -64,19 +65,18 @@ export default function GameSetupForm({ game }: { game: Game }) {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 px-4 py-16">
-      <div className="mx-auto max-w-2xl">
-        <div className="mb-10">
-          <h1 className="text-3xl font-bold text-white">Set up your game</h1>
-          <p className="mt-2 text-zinc-400">
-            Join code: <span className="font-mono font-semibold text-white">{game.join_code}</span>
-          </p>
-        </div>
+    <PageShell>
+      <TopBar href="/dashboard" maxWidth="max-w-2xl" />
+      <main className="mx-auto max-w-2xl px-5 pb-20 pt-6 sm:px-6">
+        <h1 className="pf-display text-5xl text-tusk sm:text-6xl">You&apos;re booked</h1>
+        <p className="mt-4 flex flex-wrap items-center gap-3 text-lg text-tusk/70">
+          Payment received. Your join code is
+          <span className="pf-tag text-2xl">{game.join_code}</span>
+        </p>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Game name */}
-          <div className="space-y-1">
-            <label htmlFor="game_name" className="block text-sm font-medium text-zinc-300">
+        <form onSubmit={handleSubmit} className="pf-paper mt-8 space-y-7 p-6 sm:p-8">
+          <div>
+            <label htmlFor="game_name" className="pf-label">
               Game name
             </label>
             <input
@@ -86,15 +86,14 @@ export default function GameSetupForm({ game }: { game: Game }) {
               maxLength={60}
               value={gameName}
               onChange={(e) => setGameName(e.target.value)}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-white focus:outline-none"
-              placeholder="e.g. Office Holiday Party"
+              className="pf-input"
+              placeholder="Office holiday party"
             />
           </div>
 
-          {/* Game date */}
-          <div className="space-y-1">
-            <label htmlFor="game_date" className="block text-sm font-medium text-zinc-300">
-              Date &amp; time
+          <div>
+            <label htmlFor="game_date" className="pf-label">
+              Date and time
             </label>
             <input
               id="game_date"
@@ -102,58 +101,57 @@ export default function GameSetupForm({ game }: { game: Game }) {
               required
               value={gameDate}
               onChange={(e) => setGameDate(e.target.value)}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white focus:border-white focus:outline-none [color-scheme:dark]"
+              className="pf-input"
             />
           </div>
 
-          {/* Theme selector */}
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-zinc-300">Theme</p>
+          <fieldset>
+            <legend className="pf-label">Occasion</legend>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {THEMES.map((t) => (
                 <button
                   key={t.id}
                   type="button"
+                  aria-pressed={theme === t.id}
                   onClick={() => setTheme(t.id)}
-                  className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition ${
+                  className={`flex flex-col items-center gap-1.5 rounded-xl border-[2.5px] border-ink p-3 text-center transition-opacity ${
                     theme === t.id
-                      ? 'border-white bg-zinc-800'
-                      : 'border-zinc-700 bg-zinc-900 hover:border-zinc-500'
+                      ? 'bg-loot shadow-[0_3px_0_0_var(--pf-ink)]'
+                      : 'bg-white opacity-70 hover:opacity-100'
                   }`}
                 >
-                  <span className="text-2xl">{t.emoji}</span>
-                  <span className="text-xs font-medium text-white leading-tight">{t.label}</span>
+                  <span className="text-2xl" aria-hidden="true">{t.emoji}</span>
+                  <span className="text-xs font-bold leading-tight">{t.label}</span>
                 </button>
               ))}
             </div>
-          </div>
+          </fieldset>
 
-          {/* Video call URL */}
-          <div className="space-y-1">
-            <label htmlFor="video_url" className="block text-sm font-medium text-zinc-300">
-              Video call link <span className="text-zinc-500">(optional)</span>
+          <div>
+            <label htmlFor="video_url" className="pf-label">
+              Video call link <span className="pf-hint">(optional)</span>
             </label>
             <input
               id="video_url"
               type="url"
               value={videoUrl}
               onChange={(e) => setVideoUrl(e.target.value)}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-white focus:outline-none"
-              placeholder="Paste your Zoom, Meet, or Teams link"
+              className="pf-input"
+              placeholder="Paste your Zoom, Meet or Teams link"
             />
           </div>
 
-          {error && <p className="text-sm text-red-400">{error}</p>}
+          {error && (
+            <p className="pf-error" role="alert">
+              {error}
+            </p>
+          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-white px-4 py-3 font-semibold text-zinc-950 transition hover:bg-zinc-200 disabled:opacity-50"
-          >
+          <button type="submit" disabled={loading} className="pf-btn pf-btn-lg pf-btn-loot w-full">
             {loading ? 'Saving…' : 'Save and continue'}
           </button>
         </form>
-      </div>
-    </div>
+      </main>
+    </PageShell>
   )
 }

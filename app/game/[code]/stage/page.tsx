@@ -10,14 +10,18 @@ import { useGifts } from '@/hooks/useGifts'
 import { useFeedEvents } from '@/hooks/useFeedEvents'
 import { QRCodeSVG } from 'qrcode.react'
 import type { FeedEvent } from '@/types'
+import { Announcement } from '@/components/brand/Announcement'
+import { GiftBox } from '@/components/brand/GiftBox'
+import { Avatar } from '@/components/brand/Avatar'
+import { StatusScreen } from '@/components/brand/Shell'
 
 function getFeedEventStyle(event: FeedEvent): React.CSSProperties {
   if (event.content?.includes('stole'))
-    return { backgroundColor: 'rgba(184, 146, 42, 0.5)', border: '1px solid rgba(184, 146, 42, 0.8)' }
+    return { backgroundColor: 'rgba(255, 79, 100, 0.28)', border: '2px solid rgba(255, 79, 100, 0.7)' }
   if (event.content?.includes('opened'))
-    return { backgroundColor: 'rgba(20, 83, 45, 0.4)', border: '1px solid rgba(34, 197, 94, 0.3)' }
+    return { backgroundColor: 'rgba(79, 224, 181, 0.16)', border: '2px solid rgba(79, 224, 181, 0.45)' }
   if (event.content?.includes('locked forever'))
-    return { backgroundColor: 'rgba(122, 31, 46, 0.4)', border: '1px solid rgba(122, 31, 46, 0.6)' }
+    return { backgroundColor: 'rgba(245, 184, 65, 0.22)', border: '2px solid rgba(245, 184, 65, 0.7)' }
   return { backgroundColor: 'rgba(255, 255, 255, 0.05)' }
 }
 
@@ -148,56 +152,43 @@ export default function StagePage({
 
   // Loading state
   if (!game) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#1A2B4A]">
-        <p className="text-white/60 text-lg">Loading…</p>
-      </div>
-    )
+    return <StatusScreen title="Loading…" />
   }
 
   // Game over banner
   if (game.status === 'complete') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#1A2B4A] px-4">
-        <div className="text-center space-y-6 max-w-sm w-full">
-          <div className="text-6xl">🎉</div>
-          <h1
-            className="text-4xl font-bold text-[#B8922A] tracking-tight"
-            style={{ fontFamily: 'var(--font-playfair)' }}
-          >
-            Game Over!
-          </h1>
-          <p className="text-white/60 text-lg">{game.game_name}</p>
-          {isHost ? (
-            <button
-              onClick={endGame}
-              className="w-full min-h-14 rounded-2xl bg-[#B8922A] text-white font-bold text-xl hover:opacity-90 active:scale-95 transition-all"
-            >
-              End Game
+      <StatusScreen
+        title="That's the game"
+        action={
+          isHost ? (
+            <button onClick={endGame} className="pf-btn pf-btn-lg pf-btn-loot">
+              End the game and show the recap
             </button>
-          ) : (
-            <p className="text-white/40 text-sm">Waiting for host to end the game…</p>
-          )}
-        </div>
-      </div>
+          ) : undefined
+        }
+      >
+        <p>{game.game_name}</p>
+        {!isHost && <p className="mt-2 text-base text-tusk/50">Waiting for the host to open the recap.</p>}
+      </StatusScreen>
     )
   }
 
   // Waiting / pre-game state
   if (game.status !== 'active') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#1A2B4A]">
-        <p className="text-white/60 text-lg">Waiting for host to start the game…</p>
-      </div>
+      <StatusScreen title="Almost showtime">
+        <p>Waiting for the host to start the game.</p>
+      </StatusScreen>
     )
   }
 
   return (
-    <div className="flex h-screen bg-[#1A2B4A] text-white overflow-hidden">
+    <div className="pf-page flex !min-h-0 h-screen overflow-hidden">
 
       {/* Error toast */}
       {errorMsg && (
-        <div className="fixed top-4 inset-x-4 bg-red-600 text-white rounded-xl px-4 py-3 text-sm font-medium z-50 shadow-lg">
+        <div className="fixed top-4 inset-x-4 bg-redhanded text-ink border-[3px] border-ink rounded-2xl px-4 py-3 font-extrabold z-[70]">
           {errorMsg}
         </div>
       )}
@@ -213,19 +204,10 @@ export default function StagePage({
             transition={{ duration: 0.3 }}
             className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
           >
-            {stealAnnouncement ? (
-              <div className="bg-[#7A1F2E] rounded-3xl px-12 py-10 text-center shadow-2xl max-w-lg mx-4">
-                <div className="text-6xl mb-4">🎁💨</div>
-                <div className="text-4xl font-bold text-white mb-3">PILFER!</div>
-                <div className="text-white/90 text-lg leading-snug">{stealAnnouncement}</div>
-              </div>
-            ) : (
-              <div className="bg-[#B8922A] rounded-3xl px-12 py-10 text-center shadow-2xl max-w-lg mx-4">
-                <div className="text-6xl mb-4">🔒</div>
-                <div className="text-4xl font-bold text-white mb-3">LOCKED!</div>
-                <div className="text-white/90 text-lg">{lockAnnouncement}</div>
-              </div>
-            )}
+            <Announcement
+              kind={stealAnnouncement ? 'steal' : 'lock'}
+              text={stealAnnouncement ?? lockAnnouncement ?? ''}
+            />
           </motion.div>
         )}
       </AnimatePresence>
@@ -234,8 +216,8 @@ export default function StagePage({
       {hostActionMode && (
         <div className="fixed inset-0 z-40 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60" onClick={() => setHostActionMode(null)} />
-          <div className="relative z-10 w-full max-w-sm mx-4 bg-[#1A2B4A] border border-white/15 rounded-xl shadow-2xl p-5">
-            <h3 className="text-sm font-semibold uppercase tracking-widest text-[#B8922A] mb-4">
+          <div className="pf-panel pf-pop relative z-10 w-full max-w-sm mx-4 !border-loot p-5">
+            <h3 className="pf-display text-2xl text-tusk mb-4">
               {hostActionMode === 'open' ? 'Open a gift for ' : 'Steal a gift for '}
               {currentTurnPlayer?.display_name}
             </h3>
@@ -243,15 +225,15 @@ export default function StagePage({
             {hostActionMode === 'open' && (
               <div className="flex flex-wrap gap-2">
                 {wrappedGifts.length === 0 ? (
-                  <p className="text-white/40 text-sm">No wrapped gifts remaining.</p>
+                  <p className="text-tusk/40 text-sm">No wrapped gifts remaining.</p>
                 ) : wrappedGifts.map((gift, index) => (
                   <button
                     key={gift.id}
                     onClick={() => { openGiftForPlayer(gift.id); setHostActionMode(null) }}
-                    className="flex flex-col items-center justify-center w-24 rounded-xl bg-white/8 border border-white/15 p-3 hover:bg-white/15 active:scale-95 transition-all"
+                    className="flex flex-col items-center justify-center w-24 rounded-xl border-2 border-tusk/20 p-2 hover:border-loot active:scale-95 transition-all"
                   >
-                    <span className="text-2xl">🎁</span>
-                    <span className="text-[11px] text-white/60 mt-1">Gift {index + 1}</span>
+                    <GiftBox seed={index} size={56} />
+                    <span className="text-xs font-bold text-tusk/70 mt-1">Gift {index + 1}</span>
                   </button>
                 ))}
               </div>
@@ -260,23 +242,23 @@ export default function StagePage({
             {hostActionMode === 'steal' && (
               <div className="space-y-2">
                 {hostStealableGifts.length === 0 ? (
-                  <p className="text-white/40 text-sm">No stealable gifts available.</p>
+                  <p className="text-tusk/40 text-sm">No stealable gifts available.</p>
                 ) : hostStealableGifts.map((gift) => {
                   const holder = players.find((p) => p.id === gift.current_holder)
                   return (
                     <button
                       key={gift.id}
                       onClick={() => { stealGiftForPlayer(gift.id); setHostActionMode(null) }}
-                      className="w-full flex items-center gap-3 rounded-xl bg-white/8 border border-white/15 px-3 py-2.5 text-left hover:bg-white/15 active:scale-[0.98] transition-all"
+                      className="w-full flex items-center gap-3 rounded-xl border-2 border-tusk/20 px-3 py-2.5 text-left hover:border-loot active:scale-[0.98] transition-all"
                     >
-                      <span className="text-xl">🎁</span>
+                      <GiftBox seed={1} size={36} className="shrink-0" />
                       <div className="min-w-0">
                         <p className="text-sm font-semibold truncate">{gift.gift_name}</p>
                         {holder && (
-                          <p className="text-[11px] text-white/40">Held by {holder.display_name}</p>
+                          <p className="text-[11px] text-tusk/40">Held by {holder.display_name}</p>
                         )}
                       </div>
-                      <span className="text-[#B8922A] text-xs font-bold shrink-0 ml-auto">Steal →</span>
+                      <span className="pf-chip pf-chip-live shrink-0 ml-auto">Steal</span>
                     </button>
                   )
                 })}
@@ -285,7 +267,7 @@ export default function StagePage({
 
             <button
               onClick={() => setHostActionMode(null)}
-              className="mt-4 w-full rounded-xl border border-white/15 py-2 text-sm text-white/50 hover:bg-white/8 transition-colors"
+              className="pf-btn pf-btn-sm pf-btn-ghost mt-4 w-full"
             >
               Cancel
             </button>
@@ -294,11 +276,11 @@ export default function StagePage({
       )}
 
       {/* ── LEFT COLUMN — Players ──────────────────────────────── */}
-      <div className="w-1/5 border-r border-white/10 flex flex-col min-w-0">
-        <h2 className="px-4 py-3 text-xs font-semibold uppercase tracking-widest text-[#B8922A] shrink-0">
-          Players
+      <div className="w-1/5 border-r-2 border-tusk/10 bg-midnight/70 flex flex-col min-w-0">
+        <h2 className="px-4 py-4 text-lg font-extrabold text-tusk shrink-0">
+          The crew
         </h2>
-        <ul className="flex-1 overflow-y-auto divide-y divide-white/5">
+        <ul className="flex-1 overflow-y-auto divide-y divide-tusk/5">
           {[...players]
             .sort((a, b) => {
               if (a.turn_order == null && b.turn_order == null) return 0
@@ -313,38 +295,35 @@ export default function StagePage({
               <li
                 key={player.id}
                 className={[
-                  'px-4 py-3 flex items-center justify-between gap-2 transition-colors',
+                  'px-3 py-3 flex items-center justify-between gap-2 transition-colors',
                   isCurrent
-                    ? 'bg-[#B8922A]/20 border-l-2 border-[#B8922A]'
-                    : 'border-l-2 border-transparent',
+                    ? 'bg-loot/20 border-l-4 border-loot'
+                    : 'border-l-4 border-transparent',
                 ].join(' ')}
               >
-                <span className="text-sm font-medium truncate">
-                  {player.role === 'spectator' && <span className="mr-1">👁</span>}
-                  {player.display_name}
-                  {isCurrent && (
-                    <span className="ml-1.5 text-[10px] font-semibold uppercase text-[#B8922A]">
-                      ← now
-                    </span>
-                  )}
+                <span className="flex items-center gap-2 min-w-0">
+                  <Avatar name={player.display_name} size={30} />
+                  <span className={`truncate font-bold ${player.role === 'spectator' ? 'text-tusk/50' : 'text-tusk'}`}>
+                    {player.display_name}
+                  </span>
                 </span>
                 {isHost && isCurrent ? (
                   <div className="flex gap-1 shrink-0">
                     <button
                       onClick={() => setHostActionMode('open')}
-                      className="text-[10px] font-semibold px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-white/70 transition-colors"
+                      className="text-xs font-extrabold px-2 py-1 rounded-lg border-2 border-ink bg-tusk text-ink hover:bg-loot transition-colors"
                     >
                       Open
                     </button>
                     <button
                       onClick={() => setHostActionMode('steal')}
-                      className="text-[10px] font-semibold px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-white/70 transition-colors"
+                      className="text-xs font-extrabold px-2 py-1 rounded-lg border-2 border-ink bg-tusk text-ink hover:bg-loot transition-colors"
                     >
                       Steal
                     </button>
                   </div>
                 ) : (
-                  <span className="text-base shrink-0">{hasGift ? '✅' : '⏳'}</span>
+                  hasGift ? <GiftBox seed={1} size={24} className="shrink-0" title="Holding a gift" /> : null
                 )}
               </li>
             )
@@ -353,23 +332,25 @@ export default function StagePage({
       </div>
 
       {/* ── CENTER COLUMN — Game ───────────────────────────────── */}
-      <div className="w-3/5 flex flex-col overflow-hidden border-r border-white/10">
+      <div className="w-3/5 flex flex-col overflow-hidden border-r-2 border-tusk/10">
 
         {/* Turn bar */}
-        <div className="px-6 py-3 border-b border-white/10 flex items-center gap-4 text-sm shrink-0">
-          <span>
-            <span className="text-[#B8922A] font-semibold">Current turn: </span>
-            <span className="text-white font-medium">
-              {currentTurnPlayer?.display_name ?? '—'}
-            </span>
-          </span>
-          <span className="text-white/20">|</span>
-          <span>
-            <span className="text-white/50">On deck: </span>
-            <span className="text-white/80">
-              {onDeckPlayer?.display_name ?? '—'}
-            </span>
-          </span>
+        <div className="px-6 py-4 bg-alley border-b-[3px] border-ink flex items-center justify-between gap-6 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            {currentTurnPlayer && <Avatar name={currentTurnPlayer.display_name} size={52} />}
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-loot">Up now</p>
+              <p className="pf-display truncate text-4xl text-tusk">
+                {currentTurnPlayer?.display_name ?? 'Nobody yet'}
+              </p>
+            </div>
+          </div>
+          <div className="text-right shrink-0">
+            <p className="text-sm font-bold text-tusk/50">On deck</p>
+            <p className="text-xl font-extrabold text-tusk/85">
+              {onDeckPlayer?.display_name ?? 'Last turn'}
+            </p>
+          </div>
         </div>
 
         {/* Gift area — scrollable */}
@@ -383,17 +364,16 @@ export default function StagePage({
             return (
               <div className="flex items-center justify-between gap-4">
                 <h1
-                  className="text-3xl font-bold text-[#B8922A] tracking-tight"
-                  style={{ fontFamily: 'var(--font-playfair)' }}
+                  className="pf-display text-5xl text-tusk"
                 >
                   {game.game_name}
                 </h1>
                 {joinUrl && (
                   <div className="flex flex-col items-center gap-1 shrink-0">
-                    <div className="rounded-lg bg-white p-1">
+                    <div className="rounded-xl border-[3px] border-ink bg-white p-1.5">
                       <QRCodeSVG value={joinUrl} size={80} />
                     </div>
-                    <p className="text-[10px] text-white/30">Scan to join</p>
+                    <p className="text-xs font-bold text-tusk/50">Scan to watch</p>
                   </div>
                 )}
               </div>
@@ -403,20 +383,17 @@ export default function StagePage({
           {/* Wrapped gifts */}
           {wrappedGifts.length > 0 && (
             <section>
-              <h3 className="text-xs font-semibold uppercase tracking-widest text-white/30 mb-3">
-                Wrapped — {wrappedGifts.length}
+              <h3 className="text-lg font-extrabold text-tusk/70 mb-3">
+                {wrappedGifts.length} still wrapped
               </h3>
               <div className="flex flex-wrap gap-3">
                 {wrappedGifts.map((gift, index) => (
                   <div
                     key={gift.id}
-                    className="relative w-28 h-28 rounded-xl bg-white/8 border border-white/15 flex flex-col items-center justify-center select-none"
+                    className="relative flex flex-col items-center select-none"
                   >
-                    {gift.is_locked && (
-                      <span className="absolute top-1.5 right-1.5 text-xs">🔒</span>
-                    )}
-                    <span className="text-3xl">🎁</span>
-                    <span className="text-[11px] text-white/50 mt-1">Gift {index + 1}</span>
+                    <GiftBox seed={index} size={96} className={index % 2 === 0 ? '-rotate-3' : 'rotate-3'} />
+                    <span className="text-xs font-bold text-tusk/55 mt-1">Gift {index + 1}</span>
                   </div>
                 ))}
               </div>
@@ -426,38 +403,50 @@ export default function StagePage({
           {/* Opened gifts */}
           {openedGifts.length > 0 && (
             <section>
-              <h3 className="text-xs font-semibold uppercase tracking-widest text-white/30 mb-3">
-                Opened — {openedGifts.length}
+              <h3 className="text-lg font-extrabold text-tusk/70 mb-3">
+                {openedGifts.length} opened
               </h3>
               <div className="grid grid-cols-3 gap-3">
                 {openedGifts.map((gift) => (
                   <div
                     key={gift.id}
-                    className="relative rounded-xl bg-white/8 border border-white/15 overflow-hidden"
+                    className={`relative rounded-2xl bg-tusk text-ink border-[3px] border-ink overflow-hidden ${
+                      gift.is_locked ? 'shadow-[5px_5px_0_0_var(--pf-loot)]' : ''
+                    }`}
                   >
                     {gift.is_locked && (
-                      <span className="absolute top-1.5 right-1.5 text-sm z-10">🔒</span>
+                      <span className="pf-chip absolute top-2 right-2 z-10 !bg-loot">Locked</span>
                     )}
                     {gift.image_url ? (
                       <img
                         src={gift.image_url}
                         alt={gift.gift_name}
-                        className="w-full max-h-40 object-contain bg-black/20"
+                        className="w-full max-h-44 object-contain bg-ink/10 border-b-[3px] border-ink"
                       />
                     ) : (
-                      <div className="w-full h-24 bg-white/5 flex items-center justify-center px-2">
-                        <p className="text-xs text-white/40 text-center leading-tight line-clamp-3">
+                      <div className="w-full h-24 bg-ink/5 border-b-[3px] border-ink flex items-center justify-center px-2">
+                        <p className="text-sm font-bold text-ink/50 text-center leading-tight line-clamp-3">
                           {gift.gift_name}
                         </p>
                       </div>
                     )}
                     <div className="p-2.5">
-                      <p className="text-xs font-semibold truncate">{gift.gift_name}</p>
-                      {gift.steal_count > 0 && (
-                        <p className="text-[11px] text-[#B8922A] mt-0.5">
-                          🔄 {gift.steal_count} steal{gift.steal_count !== 1 ? 's' : ''}
-                        </p>
-                      )}
+                      <p className="font-extrabold truncate">{gift.gift_name}</p>
+                      <div className="flex items-center gap-1 mt-1.5" title={`Stolen ${gift.steal_count} of 3 times`}>
+                        {[0, 1, 2].map((i) => (
+                          <span
+                            key={i}
+                            className={`w-2.5 h-2.5 rounded-full border-[1.5px] border-ink ${
+                              i < gift.steal_count ? 'bg-redhanded' : 'bg-white'
+                            }`}
+                          />
+                        ))}
+                        <span className="ml-1 text-xs font-bold text-ink/60">
+                          {gift.steal_count === 0
+                            ? 'Not stolen yet'
+                            : `${gift.steal_count} steal${gift.steal_count !== 1 ? 's' : ''}`}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -466,7 +455,7 @@ export default function StagePage({
           )}
 
           {gifts.length === 0 && (
-            <p className="text-center text-white/20 text-sm pt-12">
+            <p className="text-center text-tusk/50 font-medium pt-12">
               No gifts yet.
             </p>
           )}
@@ -476,29 +465,29 @@ export default function StagePage({
       </div>
 
       {/* ── RIGHT COLUMN — Live Feed ───────────────────────────── */}
-      <div className="w-1/5 flex flex-col min-w-0">
-        <h2 className="px-4 py-3 text-xs font-semibold uppercase tracking-widest text-[#B8922A] shrink-0">
-          Live Feed
+      <div className="w-1/5 bg-midnight/70 flex flex-col min-w-0">
+        <h2 className="px-4 py-4 text-lg font-extrabold text-tusk shrink-0">
+          Live feed
         </h2>
         <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2">
           {feedEvents.length === 0 && (
-            <p className="text-center text-white/20 text-xs pt-4">Feed is quiet…</p>
+            <p className="text-center text-tusk/45 text-sm font-medium pt-4">All quiet. The first steal changes that.</p>
           )}
           {feedEvents.map((event) => {
             const player = players.find((p) => p.id === event.player_id)
             return (
               <div
                 key={event.id}
-                className="rounded-lg p-3 space-y-0.5"
+                className="rounded-2xl p-3 space-y-0.5"
                 style={getFeedEventStyle(event)}
               >
                 {player && (
-                  <p className="text-[11px] font-semibold text-[#B8922A] mb-0.5 truncate">
-                    {player.role === 'spectator' && <span className="mr-1">👁</span>}
+                  <p className="text-xs font-extrabold text-loot mb-0.5 truncate">
+                    {player.role === 'spectator' && <span className="mr-1" aria-hidden="true">👀</span>}
                     {player.display_name}
                   </p>
                 )}
-                <p className="text-xs text-white/75 leading-snug">{event.content}</p>
+                <p className="text-sm font-medium text-tusk/90 leading-snug">{event.content}</p>
               </div>
             )
           })}

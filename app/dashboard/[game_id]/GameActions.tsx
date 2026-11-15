@@ -88,96 +88,121 @@ export default function GameActions({ gameId, joinCode, status, gameDate }: Prop
     ? `${window.location.origin}/join/${joinCode}`
     : ''
 
-  return (
-    <div className="space-y-3">
+  const dateLabel = gameDate
+    ? new Date(gameDate).toLocaleString(undefined, {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      })
+    : 'No date set'
 
-      {/* Edit Date */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-medium text-zinc-300">Party date &amp; time</p>
+  return (
+    <div className="space-y-6">
+      {/* Open for joining: the one thing to do while the game is still being set up */}
+      {status === 'setup' && (
+        <div className="pf-paper p-6 sm:p-8">
+          <h2 className="pf-display text-3xl">Ready for guests?</h2>
+          <p className="mt-2 text-ink/70">
+            Open the game and your join link and QR code start working. Guests can then join and
+            add their gifts any time before the party.
+          </p>
+          <button
+            onClick={handleOpen}
+            disabled={opening || openSuccess}
+            className="pf-btn pf-btn-lg pf-btn-loot mt-5 w-full"
+          >
+            {openSuccess ? 'Opened. One moment…' : opening ? 'Opening…' : 'Open for joining'}
+          </button>
+          {dateError && !editDateOpen && (
+            <p className="pf-error mt-3" role="alert">
+              {dateError}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Invite: QR, what happens next, and the way into the waiting room */}
+      {(status === 'invited' || status === 'active') && joinUrl && (
+        <div className="pf-paper overflow-hidden">
+          <div className="grid gap-6 p-6 sm:grid-cols-[auto_1fr] sm:p-8">
+            <div className="flex flex-col items-center gap-2">
+              <div className="rounded-2xl border-[3px] border-ink bg-white p-3">
+                <QRCodeSVG value={joinUrl} size={168} />
+              </div>
+              <p className="text-sm font-bold text-ink/60">Guests scan to join</p>
+            </div>
+
+            <div className="flex flex-col">
+              <h2 className="pf-display text-3xl">
+                {status === 'active' ? 'The game is live' : 'Get everyone in'}
+              </h2>
+              {status === 'invited' && (
+                <ol className="mt-3 list-decimal space-y-2 pl-5 font-medium text-ink/80">
+                  <li>Send the join link to your guests. Each one enters a name and adds a gift.</li>
+                  <li>Join from your own phone too if you are playing.</li>
+                  <li>Open the waiting room to watch people arrive, then start the game.</li>
+                </ol>
+              )}
+              <div className="mt-6 flex flex-col gap-3 sm:mt-auto sm:flex-row sm:pt-6">
+                <a
+                  href={`/game/${joinCode}`}
+                  className={`pf-btn flex-1 ${status === 'active' ? 'pf-btn-red' : 'pf-btn-loot'}`}
+                >
+                  {status === 'active' ? 'Go to the game' : 'Open the waiting room'}
+                </a>
+                <button onClick={handleCopyLink} className="pf-btn pf-btn-tusk flex-1">
+                  {copied ? 'Link copied' : 'Copy join link'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Party date */}
+      <div className="pf-panel p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-bold text-tusk/60">Party date and time</p>
+            {!editDateOpen && <p className="mt-1 text-lg font-bold text-tusk">{dateLabel}</p>}
+          </div>
           <button
             onClick={() => { setEditDateOpen((v) => !v); setDateError(null) }}
-            className="text-xs text-zinc-400 hover:text-white transition-colors"
+            className="pf-btn pf-btn-sm pf-btn-ghost"
           >
-            {editDateOpen ? 'Cancel' : 'Edit'}
+            {editDateOpen ? 'Cancel' : 'Change'}
           </button>
         </div>
 
-        {editDateOpen ? (
-          <div className="space-y-2">
+        {editDateOpen && (
+          <div className="mt-3 space-y-3">
             <input
               type="datetime-local"
+              aria-label="Party date and time"
               value={newDate}
               onChange={(e) => setNewDate(e.target.value)}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-white text-sm focus:border-white focus:outline-none [color-scheme:dark]"
+              className="pf-input"
             />
-            {dateError && <p className="text-xs text-red-400">{dateError}</p>}
-            <button
-              onClick={handleSaveDate}
-              disabled={savingDate}
-              className="w-full rounded-lg bg-white px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-zinc-200 disabled:opacity-50 transition-colors"
-            >
-              {savingDate ? 'Saving…' : 'Save Date'}
+            {dateError && (
+              <p className="pf-error-dark" role="alert">
+                {dateError}
+              </p>
+            )}
+            <button onClick={handleSaveDate} disabled={savingDate} className="pf-btn pf-btn-loot w-full">
+              {savingDate ? 'Saving…' : 'Save date'}
             </button>
           </div>
-        ) : (
-          <p className="text-sm text-zinc-400">
-            {gameDate
-              ? new Date(gameDate).toLocaleString(undefined, {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                  hour: 'numeric',
-                  minute: '2-digit',
-                  hour12: true,
-                })
-              : 'No date set'}
-          </p>
         )}
       </div>
 
-      {/* QR code + what to do next */}
-      {(status === 'invited' || status === 'active') && joinUrl && (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6 space-y-5">
-          <div className="flex flex-col items-center gap-2">
-            <div className="rounded-lg bg-white p-3">
-              <QRCodeSVG value={joinUrl} size={180} />
-            </div>
-            <p className="text-sm text-zinc-400">Guests scan this, or use the join link below</p>
-          </div>
-
-          {status === 'invited' && (
-            <ol className="space-y-2 text-sm text-zinc-300 list-decimal pl-5">
-              <li>Send the join link to your guests. Each one enters a name and adds a gift.</li>
-              <li>Join yourself from your phone too if you are playing.</li>
-              <li>Open the waiting room to watch people arrive, then press Start Game.</li>
-            </ol>
-          )}
-
-          <a
-            href={`/game/${joinCode}`}
-            className="block w-full rounded-lg bg-[#B8922A] px-4 py-3 text-center font-semibold text-white transition hover:opacity-90"
-          >
-            {status === 'active' ? 'Go to the game' : 'Open the waiting room'}
-          </a>
-        </div>
-      )}
-
       {status === 'setup' && (
-        <button
-          onClick={handleOpen}
-          disabled={opening || openSuccess}
-          className="w-full rounded-lg bg-white px-4 py-3 font-semibold text-zinc-950 transition hover:bg-zinc-200 disabled:opacity-50"
-        >
-          {openSuccess ? 'Game opened! Refreshing…' : opening ? 'Opening…' : 'Open for Joining'}
+        <button onClick={handleCopyLink} className="pf-btn pf-btn-ghost w-full">
+          {copied ? 'Link copied' : 'Copy join link'}
         </button>
       )}
-      <button
-        onClick={handleCopyLink}
-        className="w-full rounded-lg border border-zinc-700 px-4 py-3 font-semibold text-white transition hover:bg-zinc-800"
-      >
-        {copied ? 'Copied!' : 'Copy Join Link'}
-      </button>
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
+import { CenteredCard } from '@/components/brand/Shell'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -30,62 +31,65 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950 px-4">
-      <div className="w-full max-w-md space-y-8">
+    <CenteredCard>
+      <h1 className="pf-display pr-20 text-4xl sm:text-5xl">Welcome back</h1>
+      <p className="mt-3 text-ink/70">
+        New here?{' '}
+        <Link href="/signup" className="pf-link text-ink">
+          Create a host account
+        </Link>
+      </p>
+
+      <form onSubmit={handleSubmit} className="mt-7 space-y-5">
         <div>
-          <h1 className="text-3xl font-bold text-white">Welcome back</h1>
-          <p className="mt-2 text-zinc-400">
-            Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-white underline underline-offset-2">
-              Sign up
-            </Link>
-          </p>
+          <label htmlFor="email" className="pf-label">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            required
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="pf-input"
+            placeholder="you@example.com"
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1">
-            <label htmlFor="email" className="block text-sm font-medium text-zinc-300">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-white focus:outline-none"
-              placeholder="you@example.com"
-            />
-          </div>
+        <div>
+          <label htmlFor="password" className="pf-label">
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            required
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="pf-input"
+            placeholder="Your password"
+          />
+        </div>
 
-          <div className="space-y-1">
-            <label htmlFor="password" className="block text-sm font-medium text-zinc-300">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              required
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-white focus:outline-none"
-              placeholder="Your password"
-            />
-          </div>
+        {error && (
+          <p className="pf-error" role="alert">
+            {error}
+          </p>
+        )}
 
-          {error && <p className="text-sm text-red-400">{error}</p>}
+        <button type="submit" disabled={loading} className="pf-btn pf-btn-lg pf-btn-loot w-full">
+          {loading ? 'Logging in…' : 'Log in'}
+        </button>
+      </form>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-white px-4 py-2.5 font-semibold text-zinc-950 transition hover:bg-zinc-200 disabled:opacity-50"
-          >
-            {loading ? 'Logging in…' : 'Log in'}
-          </button>
-        </form>
-      </div>
-    </div>
+      <p className="mt-6 text-sm text-ink/60">
+        Joining someone else&apos;s game? You don&apos;t need an account.{' '}
+        <Link href="/join" className="pf-link text-ink">
+          Enter a join code
+        </Link>
+      </p>
+    </CenteredCard>
   )
 }

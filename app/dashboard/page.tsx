@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-server'
 import DashboardGameCard from './DashboardGameCard'
+import { PageShell, TopBar } from '@/components/brand/Shell'
+import { GiftBox } from '@/components/brand/GiftBox'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -43,31 +45,21 @@ export default async function DashboardPage() {
   const pastGames = safeGames.filter((g) => g.status === 'complete')
 
   return (
-    <div className="min-h-screen bg-[#1A2B4A] px-6 py-10 text-white">
-      <div className="mx-auto max-w-2xl">
+    <PageShell>
+      <TopBar href="/dashboard" maxWidth="max-w-3xl">
+        <span className="hidden text-sm font-medium text-tusk/50 sm:block">{user?.email}</span>
+        <Link href="/dashboard/new" className="pf-btn pf-btn-sm pf-btn-loot">
+          New game
+        </Link>
+      </TopBar>
 
-        {/* Header */}
-        <div className="flex items-center justify-between mb-10">
-          <h1 className="text-3xl font-bold text-white">My Games</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-white/40 hidden sm:block">{user?.email}</span>
-            <Link
-              href="/dashboard/new"
-              className="rounded-xl bg-[#B8922A] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
-            >
-              New Game
-            </Link>
-          </div>
-        </div>
+      <main className="mx-auto max-w-3xl px-5 pb-20 pt-6 sm:px-6">
+        <h1 className="pf-display text-5xl text-tusk sm:text-6xl">Your games</h1>
 
-        {/* ── Upcoming Games ──────────────────────────────────── */}
-        <section className="mb-12">
-          <p className="text-xs font-semibold uppercase tracking-widest text-[#B8922A] mb-4">
-            Upcoming
-          </p>
-
+        {/* Upcoming */}
+        <section className="mt-10">
           {upcomingGames.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-8">
               {upcomingGames.map((game) => {
                 const { playerCount, giftedCount, pendingCount } = getStats(game.id)
                 return (
@@ -86,59 +78,62 @@ export default async function DashboardPage() {
               })}
             </div>
           ) : (
-            <div className="rounded-2xl bg-white/8 border border-white/15 p-10 text-center space-y-5">
-              <p className="text-white/40">No upcoming games yet.</p>
-              <Link
-                href="/dashboard/new"
-                className="inline-flex items-center justify-center min-h-12 px-8 rounded-xl bg-[#B8922A] text-white font-bold hover:opacity-90 transition-opacity"
-              >
-                Host a New Game
+            <div className="pf-paper flex flex-col items-center gap-5 px-6 py-10 text-center">
+              <div className="flex items-end gap-1" aria-hidden="true">
+                <GiftBox seed={1} size={56} className="-rotate-6" />
+                <GiftBox seed={0} size={76} />
+                <GiftBox seed={2} size={56} className="rotate-6" />
+              </div>
+              <div>
+                <h2 className="pf-display text-3xl">No games on the calendar</h2>
+                <p className="mt-2 text-ink/70">
+                  Set one up in a couple of minutes, then send your guests one link.
+                </p>
+              </div>
+              <Link href="/dashboard/new" className="pf-btn pf-btn-lg pf-btn-loot">
+                Host a new game
               </Link>
             </div>
           )}
         </section>
 
-        {/* ── Past Games ──────────────────────────────────────── */}
+        {/* Past games */}
         {pastGames.length > 0 && (
-          <section>
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#B8922A] mb-4">
-              Past Games
-            </p>
-            <div className="space-y-2">
+          <section className="mt-14">
+            <h2 className="text-xl font-extrabold text-tusk">Past games</h2>
+            <ul className="mt-4 space-y-3">
               {pastGames.map((game) => {
                 const { playerCount } = getStats(game.id)
                 return (
-                  <Link
-                    key={game.id}
-                    href={`/game/${game.join_code}/recap`}
-                    className="flex items-center justify-between rounded-xl bg-white/8 border border-white/10 px-4 py-3 hover:bg-white/12 transition-colors"
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-white">
-                        {game.game_name ?? 'Untitled'}
-                      </p>
-                      {game.game_date && (
-                        <p className="text-xs text-white/40 mt-0.5">
-                          {new Date(game.game_date).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })}
+                  <li key={game.id}>
+                    <Link
+                      href={`/game/${game.join_code}/recap`}
+                      className="pf-panel flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:border-loot"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate font-extrabold text-tusk">
+                          {game.game_name ?? 'Untitled game'}
                         </p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-white/40 shrink-0">
-                      <span>{playerCount} players</span>
-                      <span>→</span>
-                    </div>
-                  </Link>
+                        <p className="mt-0.5 text-sm text-tusk/55">
+                          {game.game_date
+                            ? new Date(game.game_date).toLocaleDateString(undefined, {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              })
+                            : 'No date'}
+                          , {playerCount} {playerCount === 1 ? 'player' : 'players'}
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-sm font-extrabold text-loot">See the recap</span>
+                    </Link>
+                  </li>
                 )
               })}
-            </div>
+            </ul>
           </section>
         )}
-
-      </div>
-    </div>
+      </main>
+    </PageShell>
   )
 }

@@ -2,6 +2,9 @@
 
 import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { StatusScreen } from '@/components/brand/Shell'
+import { Logo } from '@/components/brand/Logo'
+import { Confetti } from '@/components/brand/Confetti'
 import { createClient } from '@/lib/supabase'
 import type { PartyGame, Player, Gift, Action } from '@/types'
 import { track } from '@/lib/analytics'
@@ -118,60 +121,44 @@ export default function RecapPage({
 
   // ── Render guards ────────────────────────────────────────────
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#1A2B4A]">
-        <p className="text-white/60">Loading recap…</p>
-      </div>
-    )
+    return <StatusScreen title="Loading the recap…" />
   }
 
   if (!game) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#1A2B4A] px-4">
-        <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold text-white">Game not found</h1>
-          <p className="text-white/40 text-sm">This recap isn&apos;t available.</p>
-        </div>
-      </div>
+      <StatusScreen title="Game not found">
+        <p>This recap isn&apos;t available.</p>
+      </StatusScreen>
     )
   }
 
   if (game.status !== 'complete') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#1A2B4A] px-4">
-        <div className="text-center space-y-4">
-          <p className="text-white text-lg font-semibold">The game isn&apos;t over yet…</p>
-          <Link
-            href={`/game/${code}/play`}
-            className="inline-flex items-center justify-center min-h-11 px-6 rounded-xl bg-[#B8922A] text-white font-bold text-sm hover:opacity-90 transition-opacity"
-          >
-            Back to Game
+      <StatusScreen
+        title="Not over yet"
+        action={
+          <Link href={`/game/${code}/play`} className="pf-btn pf-btn-loot">
+            Back to the game
           </Link>
-        </div>
-      </div>
+        }
+      >
+        <p>The recap opens when the host ends the game.</p>
+      </StatusScreen>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#1A2B4A] px-4 py-12">
+    <div className="pf-page px-4 py-12">
+      <Confetti />
       <div className="mx-auto max-w-lg space-y-8">
 
         {/* ── Header ─────────────────────────────────────────── */}
-        <div className="text-center space-y-1">
-          <p
-            className="text-[#B8922A] text-4xl font-bold tracking-tight"
-            style={{ fontFamily: 'var(--font-playfair)' }}
-          >
-            Pilfer
-          </p>
-          <h1
-            className="text-white text-2xl font-bold mt-1"
-            style={{ fontFamily: 'var(--font-playfair)' }}
-          >
-            {game.game_name}
-          </h1>
-          <p className="text-white/40 text-xs uppercase tracking-widest font-medium pt-1">
-            Game Over
+        <div className="text-center">
+          <Logo size={112} className="mx-auto -rotate-6" />
+          <p className="mt-4 font-bold text-loot">Pilfer recap</p>
+          <h1 className="pf-display mt-1 text-5xl text-tusk">{game.game_name}</h1>
+          <p className="mt-3 text-lg font-medium text-tusk/60">
+            Every gift has a home. Here&apos;s how it went down.
           </p>
         </div>
 
@@ -179,84 +166,84 @@ export default function RecapPage({
         <div className="space-y-3">
 
           {/* Most Stolen Gift */}
-          <div className="bg-white/10 rounded-xl p-5">
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#B8922A] mb-3">
-              🔥 Most Stolen Gift
+          <div className="pf-panel p-5">
+            <p className="text-sm font-extrabold text-loot mb-2">
+              Most stolen gift
             </p>
             {mostStolenGift && mostStolenGift.steal_count > 0 ? (
               <>
-                <p className="text-white font-bold text-lg leading-tight">
+                <p className="pf-display text-tusk text-3xl">
                   {mostStolenGift.gift_name}
                 </p>
-                <p className="text-white/50 text-sm mt-1">
+                <p className="text-tusk/60 text-sm font-medium mt-1">
                   Final holder: {mostStolenHolder?.display_name ?? '—'}
                 </p>
-                <p className="text-[#B8922A] text-sm font-semibold mt-1">
+                <p className="text-loot text-sm font-semibold mt-1">
                   Stolen {mostStolenGift.steal_count}{' '}
                   {mostStolenGift.steal_count === 1 ? 'time' : 'times'}
                 </p>
               </>
             ) : (
-              <p className="text-white/40 text-sm">No gifts were stolen</p>
+              <p className="text-tusk/55 font-medium">No gifts were stolen</p>
             )}
           </div>
 
           {/* Biggest Thief */}
-          <div className="bg-white/10 rounded-xl p-5">
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#B8922A] mb-3">
-              😈 Biggest Thief
+          <div className="pf-panel p-5">
+            <p className="text-sm font-extrabold text-loot mb-2">
+              Biggest thief
             </p>
             {biggestThief && biggestThiefSteals > 0 ? (
               <>
-                <p className="text-white font-bold text-lg leading-tight">
+                <p className="pf-display text-tusk text-3xl">
                   {biggestThief.display_name}
                 </p>
-                <p className="text-[#B8922A] text-sm font-semibold mt-1">
+                <p className="text-loot text-sm font-semibold mt-1">
                   {biggestThiefSteals}{' '}
                   {biggestThiefSteals === 1 ? 'steal' : 'steals'}
                 </p>
               </>
             ) : (
-              <p className="text-white/40 text-sm">No steals this game</p>
+              <p className="text-tusk/55 font-medium">No steals this game</p>
             )}
           </div>
 
           {/* Locked Gifts */}
-          <div className="bg-white/10 rounded-xl p-5">
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#B8922A] mb-3">
-              🔒 Locked Gifts
+          <div className="pf-panel p-5">
+            <p className="text-sm font-extrabold text-loot mb-2">
+              Locked for good
             </p>
             {lockedGifts.length > 0 ? (
               <>
-                <p className="text-white font-bold text-lg leading-tight">
+                <p className="pf-display text-tusk text-3xl">
                   {lockedGifts.length}{' '}
                   {lockedGifts.length === 1 ? 'gift' : 'gifts'} locked
                 </p>
                 <ul className="mt-2 space-y-1">
                   {lockedGifts.map((g) => (
-                    <li key={g.id} className="text-white/50 text-sm">
+                    <li key={g.id} className="text-tusk/60 text-sm font-medium">
                       {g.gift_name}
                     </li>
                   ))}
                 </ul>
               </>
             ) : (
-              <p className="text-white/40 text-sm">No gifts reached 3 steals</p>
+              <p className="text-tusk/55 font-medium">No gifts reached 3 steals</p>
             )}
           </div>
 
           {/* Players */}
-          <div className="bg-white/10 rounded-xl p-5">
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#B8922A] mb-3">
+          <div className="pf-panel p-5">
+            <p className="text-sm font-extrabold text-loot mb-2">
               Players
             </p>
-            <p className="text-white font-bold text-lg leading-tight">
+            <p className="pf-display text-tusk text-3xl">
               {participants.length}{' '}
-              {participants.length === 1 ? 'participant' : 'participants'}
+              {participants.length === 1 ? 'player' : 'players'}
             </p>
             {spectators.length > 0 && (
-              <p className="text-white/50 text-sm mt-1">
-                👁 {spectators.length}{' '}
+              <p className="text-tusk/60 text-sm font-medium mt-1">
+                {spectators.length}{' '}
                 {spectators.length === 1 ? 'spectator' : 'spectators'}
               </p>
             )}
@@ -267,10 +254,9 @@ export default function RecapPage({
         {/* ── Gift Exchange ──────────────────────────────────── */}
         <div className="space-y-4">
           <h2
-            className="text-white text-xl font-bold"
-            style={{ fontFamily: 'var(--font-playfair)' }}
+            className="pf-display text-tusk text-4xl"
           >
-            Gift Exchange
+            Who got what
           </h2>
 
           {/* Player view */}
@@ -279,27 +265,27 @@ export default function RecapPage({
 
               {/* Gift you won */}
               {myWonGift ? (
-                <div className="rounded-xl border border-[#B8922A] bg-white/5 overflow-hidden">
+                <div className="pf-paper overflow-hidden">
                   {myWonGift.image_url && (
                     <img
                       src={myWonGift.image_url}
                       alt={myWonGift.gift_name}
-                      className="w-full max-h-48 object-contain bg-black/20"
+                      className="w-full max-h-56 object-contain bg-ink/10 border-b-[3px] border-ink"
                     />
                   )}
                   <div className="p-4 space-y-3">
-                    <p className="text-xs font-semibold uppercase tracking-widest text-[#B8922A]">
-                      🎁 You won this gift
+                    <p className="text-sm font-extrabold text-[#b3122b]">
+                      You&apos;re going home with
                     </p>
-                    <p className="text-white font-bold text-lg leading-tight">
+                    <p className="pf-display text-ink text-3xl">
                       {myWonGift.gift_name}
                     </p>
                     {delivery[myWonGift.id] && (
-                      <div className="rounded-lg bg-[#B8922A]/20 border border-[#B8922A]/40 px-4 py-3">
-                        <p className="text-xs font-semibold text-[#B8922A] mb-1">
-                          How to claim
+                      <div className="rounded-xl bg-loot border-[2.5px] border-ink px-4 py-3">
+                        <p className="text-xs font-extrabold text-ink/70 mb-1">
+                          How to claim it
                         </p>
-                        <p className="text-white/90 text-sm leading-snug">
+                        <p className="text-ink font-semibold leading-snug">
                           {delivery[myWonGift.id]}
                         </p>
                       </div>
@@ -307,21 +293,21 @@ export default function RecapPage({
                   </div>
                 </div>
               ) : (
-                <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-white/40 text-sm">You didn&apos;t end up with a gift.</p>
+                <div className="pf-panel p-4">
+                  <p className="text-tusk/60 font-medium">You didn&apos;t end up with a gift.</p>
                 </div>
               )}
 
               {/* Gift you submitted */}
               {mySubmittedGift && (
-                <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-1">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-white/40">
-                    Your gift was won by
+                <div className="pf-panel p-4 space-y-1">
+                  <p className="text-sm font-extrabold text-loot">
+                    Your gift went to
                   </p>
-                  <p className="text-white font-bold">
+                  <p className="pf-display text-tusk text-2xl">
                     {mySubmittedGiftWinner?.display_name ?? '—'}
                   </p>
-                  <p className="text-white/50 text-sm">{mySubmittedGift.gift_name}</p>
+                  <p className="text-tusk/60 text-sm font-medium">{mySubmittedGift.gift_name}</p>
                 </div>
               )}
             </div>
@@ -329,29 +315,29 @@ export default function RecapPage({
 
           {/* Host view — full table */}
           {isHost && (
-            <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
-              <div className="divide-y divide-white/5">
+            <div className="pf-panel overflow-hidden">
+              <div className="divide-y-2 divide-tusk/10">
                 {gifts.map((gift) => {
                   const submitter = players.find((p) => p.id === gift.submitted_by)
                   const winner = players.find((p) => p.id === gift.current_holder)
                   return (
                     <div key={gift.id} className="px-4 py-4 space-y-2">
                       <div className="flex items-start justify-between gap-3">
-                        <p className="text-white font-semibold text-sm leading-tight">
+                        <p className="text-tusk font-extrabold leading-tight">
                           {gift.gift_name}
                         </p>
                         {gift.is_locked && (
-                          <span className="text-xs shrink-0">🔒</span>
+                          <span className="pf-chip shrink-0 !bg-loot">Locked</span>
                         )}
                       </div>
-                      <div className="flex gap-4 text-xs text-white/50">
-                        <span>From: <span className="text-white/70">{submitter?.display_name ?? '—'}</span></span>
-                        <span>Won by: <span className="text-white/70">{winner?.display_name ?? '—'}</span></span>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-tusk/55">
+                        <span>From: <span className="text-tusk/70">{submitter?.display_name ?? '—'}</span></span>
+                        <span>Won by: <span className="text-tusk/70">{winner?.display_name ?? '—'}</span></span>
                       </div>
                       {delivery[gift.id] && (
-                        <div className="rounded-lg bg-[#B8922A]/15 border border-[#B8922A]/30 px-3 py-2">
-                          <p className="text-xs text-[#B8922A] font-semibold mb-0.5">Delivery info</p>
-                          <p className="text-white/80 text-xs leading-snug">{delivery[gift.id]}</p>
+                        <div className="rounded-lg bg-loot/15 border border-loot/30 px-3 py-2">
+                          <p className="text-xs text-loot font-extrabold mb-0.5">Delivery info</p>
+                          <p className="text-tusk/90 text-sm leading-snug">{delivery[gift.id]}</p>
                         </div>
                       )}
                     </div>
@@ -365,23 +351,22 @@ export default function RecapPage({
         {/* ── Share ──────────────────────────────────────────── */}
         <div className="space-y-3">
           <p
-            className="text-white text-center font-semibold"
-            style={{ fontFamily: 'var(--font-playfair)' }}
+            className="text-tusk text-center text-lg font-extrabold"
           >
             Share your game recap
           </p>
           <button
             onClick={handleCopyLink}
-            className="w-full min-h-12 rounded-xl border border-white/20 text-white font-semibold text-sm transition-colors hover:bg-white/10 active:bg-white/20"
+            className="pf-btn pf-btn-tusk w-full"
           >
-            {copied ? 'Copied!' : 'Copy Link'}
+            {copied ? 'Link copied' : 'Copy the recap link'}
           </button>
         </div>
 
         {/* ── Play again ─────────────────────────────────────── */}
         <Link
           href="/dashboard/new"
-          className="flex items-center justify-center w-full min-h-12 rounded-xl bg-[#B8922A] text-white font-bold text-sm hover:opacity-90 transition-opacity"
+          className="pf-btn pf-btn-lg pf-btn-loot w-full"
         >
           Host a new game
         </Link>

@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase'
 import { submitGift } from '@/app/actions/submitGift'
 import { track } from '@/lib/analytics'
 import { LOCAL_STORAGE_PLAYER_KEY, LOCAL_STORAGE_TOKEN_KEY } from '@/constants/game'
+import { CenteredCard, StatusScreen } from '@/components/brand/Shell'
+import { GiftBox } from '@/components/brand/GiftBox'
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024
 
@@ -157,130 +159,118 @@ export default function SubmitGiftPage({
   }
 
   if (checking) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-        <p className="text-zinc-500">Loading…</p>
-      </div>
-    )
+    return <StatusScreen title="Loading…" />
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 px-4 py-16">
-      <div className="mx-auto max-w-lg space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Submit your gift</h1>
-          {game && (
-            <p className="mt-1 text-zinc-400">
-              For <span className="font-medium text-white">{game.game_name}</span>
-            </p>
-          )}
-        </div>
+    <CenteredCard width="max-w-lg" tone="red" topBarHref={`/game/${code}`}>
+      <h1 className="pf-display pr-20 text-4xl sm:text-5xl">Add your gift</h1>
+      {game && (
+        <p className="mt-3 text-ink/70">
+          For <span className="font-extrabold text-ink">{game.game_name}</span>. It stays wrapped
+          until someone opens it.
+        </p>
+      )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Photo upload — required */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-zinc-300">
-              Gift photo <span className="text-zinc-400">(required)</span>
-            </label>
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="cursor-pointer rounded-xl border-2 border-dashed border-zinc-700 p-8 text-center transition hover:border-zinc-500"
-            >
-              {imagePreview ? (
+      <form onSubmit={handleSubmit} className="mt-7 space-y-6">
+        {/* Photo upload — required */}
+        <div>
+          <span className="pf-label">Photo of the gift</span>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex w-full flex-col items-center gap-3 rounded-2xl border-[3px] border-dashed border-ink/50 bg-white px-4 py-7 text-center transition-colors hover:border-ink"
+          >
+            {imagePreview ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={imagePreview}
-                  alt="Gift preview"
-                  className="mx-auto max-h-48 rounded-lg object-contain"
+                  alt="Your gift"
+                  className="max-h-52 rounded-xl border-[3px] border-ink object-contain"
                 />
-              ) : (
-                <p className="text-zinc-500">Click to upload a photo</p>
-              )}
-            </div>
-            {imagePreview && (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="text-xs text-zinc-500 underline"
-              >
-                Change photo
-              </button>
+                <span className="pf-link text-sm">Choose a different photo</span>
+              </>
+            ) : (
+              <>
+                <GiftBox seed={0} size={64} />
+                <span className="font-extrabold">Take or choose a photo</span>
+                <span className="text-sm font-medium text-ink/60">JPG or PNG, up to 8 MB</span>
+              </>
             )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-          </div>
-
-          {/* Gift name */}
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-zinc-300">
-              Gift name <span className="text-zinc-500">(max 40 chars)</span>
-            </label>
-            <input
-              type="text"
-              required
-              maxLength={40}
-              value={giftName}
-              onChange={(e) => setGiftName(e.target.value)}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-white focus:outline-none"
-              placeholder="e.g. Cozy Blanket Set"
-            />
-            {fieldErrors.gift_name && (
-              <p className="text-sm text-red-400">{fieldErrors.gift_name[0]}</p>
-            )}
-          </div>
-
-          {/* Description — optional */}
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-zinc-300">
-              Description <span className="text-zinc-500">(optional — shown during reveal)</span>
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              maxLength={200}
-              className="w-full resize-none rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-white focus:outline-none"
-              placeholder="What makes this gift special?"
-            />
-            {fieldErrors.description && (
-              <p className="text-sm text-red-400">{fieldErrors.description[0]}</p>
-            )}
-          </div>
-
-          {/* Delivery info — required */}
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-zinc-300">
-              Delivery info <span className="text-zinc-500">(private — shown only to whoever wins your gift, and the host)</span>
-            </label>
-            <input
-              type="text"
-              required
-              maxLength={300}
-              value={deliveryInfo}
-              onChange={(e) => setDeliveryInfo(e.target.value)}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-white focus:outline-none"
-              placeholder="e.g. Amazon link, Venmo @yourname, hand delivery"
-            />
-            {fieldErrors.delivery_info && (
-              <p className="text-sm text-red-400">{fieldErrors.delivery_info[0]}</p>
-            )}
-          </div>
-
-          {error && <p className="text-sm text-red-400">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full rounded-lg bg-white px-4 py-3 font-semibold text-zinc-950 transition hover:bg-zinc-200 disabled:opacity-50"
-          >
-            {submitting ? 'Submitting…' : 'Submit gift'}
           </button>
-        </form>
-      </div>
-    </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="gift_name" className="pf-label">
+            What is it? <span className="pf-hint">(up to 40 characters)</span>
+          </label>
+          <input
+            id="gift_name"
+            type="text"
+            required
+            maxLength={40}
+            value={giftName}
+            onChange={(e) => setGiftName(e.target.value)}
+            className="pf-input"
+            placeholder="Cozy blanket set"
+          />
+          {fieldErrors.gift_name && <p className="pf-error mt-1.5">{fieldErrors.gift_name[0]}</p>}
+        </div>
+
+        <div>
+          <label htmlFor="gift_description" className="pf-label">
+            Sell it <span className="pf-hint">(optional, shown when it&apos;s opened)</span>
+          </label>
+          <textarea
+            id="gift_description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={3}
+            maxLength={200}
+            className="pf-input resize-none"
+            placeholder="What makes this the one to steal?"
+          />
+          {fieldErrors.description && <p className="pf-error mt-1.5">{fieldErrors.description[0]}</p>}
+        </div>
+
+        <div>
+          <label htmlFor="delivery_info" className="pf-label">
+            How the winner gets it
+          </label>
+          <input
+            id="delivery_info"
+            type="text"
+            required
+            maxLength={300}
+            value={deliveryInfo}
+            onChange={(e) => setDeliveryInfo(e.target.value)}
+            className="pf-input"
+            placeholder="Amazon link, hand delivery, gift card code"
+          />
+          <p className="mt-1.5 text-sm font-medium text-ink/60">
+            Private. Only the host and whoever ends up with your gift can see this.
+          </p>
+          {fieldErrors.delivery_info && <p className="pf-error mt-1.5">{fieldErrors.delivery_info[0]}</p>}
+        </div>
+
+        {error && (
+          <p className="pf-error" role="alert">
+            {error}
+          </p>
+        )}
+
+        <button type="submit" disabled={submitting} className="pf-btn pf-btn-lg pf-btn-red w-full">
+          {submitting ? 'Wrapping it up…' : 'Add to the pile'}
+        </button>
+      </form>
+    </CenteredCard>
   )
 }

@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase-server'
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import GameActions from './GameActions'
+import { PageShell, TopBar } from '@/components/brand/Shell'
 
 export default async function GamePage({
   params,
@@ -18,55 +20,48 @@ export default async function GamePage({
 
   if (!game) notFound()
 
+  const statusLabel: Record<string, string> = {
+    setup: 'Setting up',
+    invited: 'Open for joining',
+    active: 'Live now',
+    complete: 'Finished',
+  }
+  const statusChip: Record<string, string> = {
+    setup: 'pf-chip-quiet',
+    invited: 'pf-chip-open',
+    active: 'pf-chip-live',
+    complete: 'pf-chip-quiet',
+  }
+
   return (
-    <div className="min-h-screen bg-zinc-950 px-6 py-16">
-      <div className="mx-auto max-w-2xl space-y-8">
-        <div>
-          <p className="text-sm font-medium uppercase tracking-widest text-zinc-500">Game lobby</p>
-          <h1 className="mt-2 text-3xl font-bold text-white">{game.game_name}</h1>
+    <PageShell>
+      <TopBar href="/dashboard" maxWidth="max-w-2xl">
+        <Link href="/dashboard" className="text-sm font-bold text-tusk/75 hover:text-tusk">
+          Your games
+        </Link>
+      </TopBar>
+
+      <main className="mx-auto max-w-2xl px-5 pb-20 pt-6 sm:px-6">
+        <span className={`pf-chip ${statusChip[game.status] ?? 'pf-chip-quiet'}`}>
+          {statusLabel[game.status] ?? game.status}
+        </span>
+        <h1 className="pf-display mt-4 text-5xl text-tusk sm:text-6xl">{game.game_name}</h1>
+        <p className="mt-5 flex flex-wrap items-center gap-3 text-lg text-tusk/70">
+          Join code
+          <span className="pf-tag text-3xl">{game.join_code}</span>
+        </p>
+
+        <div className="mt-8">
+          <GameActions
+            gameId={game.id}
+            joinCode={game.join_code}
+            status={game.status}
+            gameName={game.game_name ?? ''}
+            gameDate={game.game_date ?? null}
+            theme={game.theme ?? 'winter'}
+          />
         </div>
-
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-8 space-y-6">
-          <div>
-            <p className="text-sm text-zinc-400">Join code</p>
-            <p className="mt-1 font-mono text-4xl font-bold tracking-widest text-white">
-              {game.join_code}
-            </p>
-          </div>
-
-          <div>
-            <p className="text-sm text-zinc-400">Status</p>
-            <span className="mt-1 inline-block rounded-full bg-zinc-800 px-3 py-1 text-sm font-medium text-white capitalize">
-              {game.status}
-            </span>
-          </div>
-
-          <div>
-            <p className="text-sm text-zinc-400">Scheduled for</p>
-            <p className="mt-1 text-white">
-              {game.game_date
-                ? `📅 ${new Date(game.game_date).toLocaleString(undefined, {
-                    weekday: 'long',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true,
-                  })}`
-                : '📅 No date set'}
-            </p>
-          </div>
-        </div>
-
-        <GameActions
-          gameId={game.id}
-          joinCode={game.join_code}
-          status={game.status}
-          gameName={game.game_name ?? ''}
-          gameDate={game.game_date ?? null}
-          theme={game.theme ?? 'winter'}
-        />
-      </div>
-    </div>
+      </main>
+    </PageShell>
   )
 }

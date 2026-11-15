@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
+import { CenteredCard, StatusScreen } from '@/components/brand/Shell'
 
 export default function SignupPage() {
   const [email, setEmail] = useState('')
@@ -36,77 +37,73 @@ export default function SignupPage() {
 
   if (confirmed) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-950 px-4">
-        <div className="w-full max-w-md text-center space-y-4">
-          <div className="text-4xl">✉️</div>
-          <h1 className="text-2xl font-semibold text-white">Check your email</h1>
-          <p className="text-zinc-400">
-            We sent a confirmation link to{' '}
-            <span className="text-white font-medium">{email}</span>. Click it to
-            activate your account.
-          </p>
-        </div>
-      </div>
+      <StatusScreen title="Check your email">
+        <p>
+          We sent a confirmation link to <span className="font-bold text-tusk">{email}</span>. Open
+          it to finish setting up your account.
+        </p>
+      </StatusScreen>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950 px-4">
-      <div className="w-full max-w-md space-y-8">
+    <CenteredCard>
+      <h1 className="pf-display pr-20 text-4xl sm:text-5xl">Host a game</h1>
+      <p className="mt-3 text-ink/70">
+        Create a host account to run your gift swap. Games with up to 10 players are free.
+      </p>
+
+      <form onSubmit={handleSubmit} className="mt-7 space-y-5">
         <div>
-          <h1 className="text-3xl font-bold text-white">Create your account</h1>
-          <p className="mt-2 text-zinc-400">
-            Already have an account?{' '}
-            <Link href="/login" className="text-white underline underline-offset-2">
-              Log in
-            </Link>
-          </p>
+          <label htmlFor="email" className="pf-label">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            required
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="pf-input"
+            placeholder="you@example.com"
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1">
-            <label htmlFor="email" className="block text-sm font-medium text-zinc-300">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-white focus:outline-none"
-              placeholder="you@example.com"
-            />
-          </div>
+        <div>
+          <label htmlFor="password" className="pf-label">
+            Password <span className="pf-hint">(6 characters or more)</span>
+          </label>
+          <input
+            id="password"
+            type="password"
+            required
+            minLength={6}
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="pf-input"
+            placeholder="Choose a password"
+          />
+        </div>
 
-          <div className="space-y-1">
-            <label htmlFor="password" className="block text-sm font-medium text-zinc-300">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              required
-              autoComplete="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-white focus:outline-none"
-              placeholder="Min. 6 characters"
-            />
-          </div>
+        {error && (
+          <p className="pf-error" role="alert">
+            {error}
+          </p>
+        )}
 
-          {error && <p className="text-sm text-red-400">{error}</p>}
+        <button type="submit" disabled={loading} className="pf-btn pf-btn-lg pf-btn-loot w-full">
+          {loading ? 'Creating account…' : 'Create account'}
+        </button>
+      </form>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-white px-4 py-2.5 font-semibold text-zinc-950 transition hover:bg-zinc-200 disabled:opacity-50"
-          >
-            {loading ? 'Creating account…' : 'Create account'}
-          </button>
-        </form>
-      </div>
-    </div>
+      <p className="mt-6 text-sm text-ink/60">
+        Already have an account?{' '}
+        <Link href="/login" className="pf-link text-ink">
+          Log in
+        </Link>
+      </p>
+    </CenteredCard>
   )
 }

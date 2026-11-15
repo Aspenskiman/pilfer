@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { TIERS } from '@/constants/tiers'
 import type { Tier } from '@/types'
 import { track } from '@/lib/analytics'
+import Link from 'next/link'
+import { PageShell, TopBar } from '@/components/brand/Shell'
 
 const PERSONAL = TIERS.filter((t) => t.group === 'personal')
 const TEAM = TIERS.filter((t) => t.group === 'team')
@@ -21,11 +23,11 @@ export default function PricingTiers() {
     if (loading) return
 
     if (!gameName.trim()) {
-      setError('Please enter a game name first.')
+      setError('Give your game a name first.')
       return
     }
     if (!gameDate || Number.isNaN(new Date(gameDate).getTime())) {
-      setError('Please set a date and time for your party.')
+      setError('Set a date and time for your party first.')
       return
     }
 
@@ -69,108 +71,134 @@ export default function PricingTiers() {
   const tiers = group === 'personal' ? PERSONAL : TEAM
 
   return (
-    <div className="min-h-screen bg-zinc-950 px-4 py-16">
-      <div className="mx-auto max-w-4xl">
-        <div className="mb-10 text-center">
-          <h1 className="text-3xl font-bold text-white">Set up your game</h1>
-          <p className="mt-2 text-zinc-400">
-            One price per game. Players never pay, and spectators are always free.
-          </p>
-        </div>
+    <PageShell>
+      <TopBar href="/dashboard" maxWidth="max-w-4xl">
+        <Link href="/dashboard" className="text-sm font-bold text-tusk/75 hover:text-tusk">
+          Your games
+        </Link>
+      </TopBar>
 
-        <div className="mx-auto mb-8 max-w-sm space-y-3">
-          <div className="space-y-1">
-            <label htmlFor="game_name" className="block text-sm font-medium text-zinc-300">
-              Game name
-            </label>
-            <input
-              id="game_name"
-              type="text"
-              required
-              maxLength={60}
-              value={gameName}
-              onChange={(e) => setGameName(e.target.value)}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white placeholder-zinc-500 focus:border-white focus:outline-none"
-              placeholder="e.g. Office Holiday Party"
-            />
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="game_date" className="block text-sm font-medium text-zinc-300">
-              Party date &amp; time
-            </label>
-            <input
-              id="game_date"
-              type="datetime-local"
-              required
-              value={gameDate}
-              onChange={(e) => setGameDate(e.target.value)}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white focus:border-white focus:outline-none [color-scheme:dark]"
-            />
-          </div>
-        </div>
-
-        <div className="mx-auto mb-6 flex max-w-sm rounded-xl border border-zinc-700 bg-zinc-900 p-1">
-          {(['personal', 'team'] as const).map((g) => (
-            <button
-              key={g}
-              type="button"
-              onClick={() => setGroup(g)}
-              className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition ${
-                group === g ? 'bg-white text-zinc-950' : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              {g === 'personal' ? 'Friends & family' : 'Work & organizations'}
-            </button>
-          ))}
-        </div>
-
-        <div className={`mx-auto grid gap-4 ${tiers.length === 3 ? 'sm:grid-cols-3' : 'max-w-2xl sm:grid-cols-2'}`}>
-          {tiers.map((tier) => (
-            <div
-              key={tier.id}
-              className={`flex flex-col rounded-xl border p-6 ${
-                tier.highlight ? 'border-white bg-zinc-800' : 'border-zinc-700 bg-zinc-900'
-              }`}
-            >
-              {tier.highlight && (
-                <span className="mb-3 self-start rounded-full bg-white px-2.5 py-0.5 text-xs font-semibold text-zinc-950">
-                  Most popular
-                </span>
-              )}
-              <h2 className="text-lg font-semibold text-white">{tier.label}</h2>
-              <p className="mt-1 text-sm text-zinc-400">{tier.players}</p>
-              <p className="mt-4 text-3xl font-bold text-white">
-                {tier.price}
-                {tier.priceInCents != null && (
-                  <span className="ml-1 text-sm font-normal text-zinc-400">per game</span>
-                )}
-              </p>
-
-              <button
-                onClick={() => handleSelect(tier)}
-                disabled={loading !== null}
-                className={`mt-6 w-full rounded-lg px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 ${
-                  tier.highlight
-                    ? 'bg-white text-zinc-950 hover:bg-zinc-200'
-                    : 'border border-zinc-600 text-white hover:bg-zinc-800'
-                }`}
-              >
-                {loading === tier.id
-                  ? tier.priceInCents == null ? 'Creating…' : 'Redirecting to checkout…'
-                  : tier.cta}
-              </button>
-            </div>
-          ))}
-        </div>
-
-        <p className="mt-6 text-center text-sm text-zinc-500">
-          {group === 'personal'
-            ? 'For non-commercial games with friends and family.'
-            : 'For companies, teams, churches, schools and other organizations. Includes a receipt for expensing.'}
+      <main className="mx-auto max-w-4xl px-5 pb-20 pt-6 sm:px-6">
+        <h1 className="pf-display text-5xl text-tusk sm:text-6xl">Set up a game</h1>
+        <p className="mt-3 max-w-xl text-lg text-tusk/70">
+          One price per game. Players never pay, and spectators are always free.
         </p>
 
-        {error && <p className="mt-4 text-center text-sm text-red-400">{error}</p>}
-      </div>
-    </div>
+        {/* Step 1: the party */}
+        <section className="mt-10">
+          <h2 className="flex items-center gap-3 text-xl font-extrabold text-tusk">
+            <span className="pf-display flex h-9 w-9 items-center justify-center rounded-full bg-loot text-xl text-ink">
+              1
+            </span>
+            Name your party
+          </h2>
+          <div className="pf-paper mt-4 grid gap-5 p-6 sm:grid-cols-2">
+            <div>
+              <label htmlFor="game_name" className="pf-label">
+                Game name
+              </label>
+              <input
+                id="game_name"
+                type="text"
+                required
+                maxLength={60}
+                value={gameName}
+                onChange={(e) => setGameName(e.target.value)}
+                className="pf-input"
+                placeholder="Office holiday party"
+              />
+            </div>
+            <div>
+              <label htmlFor="game_date" className="pf-label">
+                Party date and time
+              </label>
+              <input
+                id="game_date"
+                type="datetime-local"
+                required
+                value={gameDate}
+                onChange={(e) => setGameDate(e.target.value)}
+                className="pf-input"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Step 2: the plan */}
+        <section className="mt-12">
+          <h2 className="flex items-center gap-3 text-xl font-extrabold text-tusk">
+            <span className="pf-display flex h-9 w-9 items-center justify-center rounded-full bg-loot text-xl text-ink">
+              2
+            </span>
+            Pick a size
+          </h2>
+
+          <div
+            role="tablist"
+            aria-label="Who the game is for"
+            className="mt-4 inline-flex rounded-2xl border-2 border-tusk/20 bg-alley p-1"
+          >
+            {(['personal', 'team'] as const).map((g) => (
+              <button
+                key={g}
+                type="button"
+                role="tab"
+                aria-selected={group === g}
+                onClick={() => setGroup(g)}
+                className={`rounded-xl px-4 py-2.5 text-sm font-extrabold transition-colors ${
+                  group === g ? 'bg-tusk text-ink' : 'text-tusk/65 hover:text-tusk'
+                }`}
+              >
+                {g === 'personal' ? 'Friends and family' : 'Work and organizations'}
+              </button>
+            ))}
+          </div>
+          <p className="mt-3 text-tusk/65">
+            {group === 'personal'
+              ? 'For non-commercial games with friends and family.'
+              : 'For companies, teams, churches, schools and other organizations. Includes a receipt for expensing.'}
+          </p>
+
+          {error && (
+            <p className="pf-error-dark mt-4" role="alert">
+              {error}
+            </p>
+          )}
+
+          <div className={`mt-6 grid gap-6 ${tiers.length === 3 ? 'md:grid-cols-3' : 'max-w-2xl md:grid-cols-2'}`}>
+            {tiers.map((tier) => (
+              <div
+                key={tier.id}
+                className={`pf-paper flex flex-col p-6 ${tier.highlight ? '' : 'pf-paper-flat'} ${
+                  group === 'team' && tier.highlight ? 'pf-paper-red' : ''
+                }`}
+              >
+                <div className="mb-2 min-h-7">
+                  {tier.highlight && <span className="pf-chip pf-chip-open">Most popular</span>}
+                </div>
+                <h3 className="text-xl font-extrabold leading-tight">{tier.label}</h3>
+                <p className="mt-1 font-semibold text-ink/65">{tier.players}</p>
+                <p className="mb-6 mt-5 flex items-baseline gap-2">
+                  <span className="pf-display text-6xl">{tier.price}</span>
+                  {tier.priceInCents != null && (
+                    <span className="text-sm font-bold text-ink/60">per game</span>
+                  )}
+                </p>
+
+                <button
+                  onClick={() => handleSelect(tier)}
+                  disabled={loading !== null}
+                  className={`pf-btn mt-auto w-full ${tier.highlight ? 'pf-btn-loot' : 'pf-btn-tusk'}`}
+                >
+                  {loading === tier.id
+                    ? tier.priceInCents == null ? 'Creating…' : 'Taking you to checkout…'
+                    : tier.cta}
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
+    </PageShell>
   )
 }

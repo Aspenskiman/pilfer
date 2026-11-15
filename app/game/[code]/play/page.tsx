@@ -10,14 +10,19 @@ import { useGifts } from '@/hooks/useGifts'
 import { useFeedEvents } from '@/hooks/useFeedEvents'
 import { useCurrentPlayer } from '@/hooks/useCurrentPlayer'
 import type { FeedEvent } from '@/types'
+import { Announcement } from '@/components/brand/Announcement'
+import { GiftBox } from '@/components/brand/GiftBox'
+import { Logo } from '@/components/brand/Logo'
+import { Avatar } from '@/components/brand/Avatar'
+import { StatusScreen } from '@/components/brand/Shell'
 
 function getFeedEventStyle(event: FeedEvent): React.CSSProperties {
   if (event.content?.includes('stole'))
-    return { backgroundColor: 'rgba(184, 146, 42, 0.5)', border: '1px solid rgba(184, 146, 42, 0.8)' }
+    return { backgroundColor: 'rgba(255, 79, 100, 0.28)', border: '2px solid rgba(255, 79, 100, 0.7)' }
   if (event.content?.includes('opened'))
-    return { backgroundColor: 'rgba(20, 83, 45, 0.4)', border: '1px solid rgba(34, 197, 94, 0.3)' }
+    return { backgroundColor: 'rgba(79, 224, 181, 0.16)', border: '2px solid rgba(79, 224, 181, 0.45)' }
   if (event.content?.includes('locked forever'))
-    return { backgroundColor: 'rgba(122, 31, 46, 0.4)', border: '1px solid rgba(122, 31, 46, 0.6)' }
+    return { backgroundColor: 'rgba(245, 184, 65, 0.22)', border: '2px solid rgba(245, 184, 65, 0.7)' }
   return { backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.05)' }
 }
 
@@ -147,21 +152,19 @@ export default function PlayPage({
   }
 
   if (!game) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#1A2B4A]">
-        <p className="text-white/60">Loading…</p>
-      </div>
-    )
+    return <StatusScreen title="Loading…" />
   }
 
   // ── MY TURN full-screen takeover ──────────────────────────────
   if (isMyTurn && !isSpectator && game.status === 'active') {
     return (
-      <div className="min-h-screen bg-[#B8922A] flex flex-col items-center justify-center px-6 gap-8">
+      <div className="relative min-h-screen bg-loot flex flex-col items-center justify-center px-6 py-16 gap-7 text-ink">
+        <div className="pf-stripes absolute inset-x-0 top-0 h-10" aria-hidden="true" />
+        <div className="pf-stripes absolute inset-x-0 bottom-0 h-10" aria-hidden="true" />
 
         {/* Error toast */}
         {errorMsg && (
-          <div className="fixed top-4 inset-x-4 bg-red-600 text-white rounded-xl px-4 py-3 text-sm font-medium z-50 shadow-lg">
+          <div className="fixed top-4 inset-x-4 bg-redhanded text-ink border-[3px] border-ink rounded-2xl px-4 py-3 font-extrabold z-[70]">
             {errorMsg}
           </div>
         )}
@@ -177,26 +180,18 @@ export default function PlayPage({
               transition={{ duration: 0.3 }}
               className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
             >
-              {stealAnnouncement ? (
-                <div className="bg-[#7A1F2E] rounded-3xl px-12 py-10 text-center shadow-2xl max-w-lg mx-4">
-                  <div className="text-6xl mb-4">🎁💨</div>
-                  <div className="text-4xl font-bold text-white mb-3">PILFER!</div>
-                  <div className="text-white/90 text-lg leading-snug">{stealAnnouncement}</div>
-                </div>
-              ) : (
-                <div className="bg-[#B8922A] rounded-3xl px-12 py-10 text-center shadow-2xl max-w-lg mx-4">
-                  <div className="text-6xl mb-4">🔒</div>
-                  <div className="text-4xl font-bold text-white mb-3">LOCKED!</div>
-                  <div className="text-white/90 text-lg">{lockAnnouncement}</div>
-                </div>
-              )}
+              <Announcement
+                kind={stealAnnouncement ? 'steal' : 'lock'}
+                text={stealAnnouncement ?? lockAnnouncement ?? ''}
+              />
             </motion.div>
           )}
         </AnimatePresence>
 
-        <p className="text-6xl font-black text-white tracking-tight text-center leading-none">
-          YOUR<br />TURN
-        </p>
+        <Logo size={120} className="pf-pop -rotate-6" />
+        <h1 className="pf-display pf-pop text-center text-7xl text-ink">
+          Your turn
+        </h1>
 
         <div className="flex flex-col w-full max-w-xs gap-4">
 
@@ -206,28 +201,29 @@ export default function PlayPage({
               <button
                 disabled={!isMyTurn}
                 onClick={() => setOpenPickerVisible((v) => !v)}
-                className="min-h-16 w-full rounded-2xl bg-white text-[#1A2B4A] font-bold text-xl active:scale-95 transition-transform disabled:opacity-50"
+                className="pf-btn pf-btn-lg pf-btn-tusk w-full !min-h-16 !text-xl"
               >
-                {openPickerVisible ? 'CANCEL' : 'OPEN A GIFT'}
+                {openPickerVisible ? 'Never mind' : 'Open a gift'}
               </button>
 
               {openPickerVisible && (
-                <div className="w-full rounded-xl bg-white/20 p-3">
+                <div className="w-full rounded-2xl border-[3px] border-ink bg-tusk p-3">
                   {wrappedGifts.length === 0 ? (
-                    <p className="text-center text-white/70 text-sm py-2">
+                    <p className="text-center text-ink/70 text-sm font-semibold py-2">
                       No gifts left to open
                     </p>
                   ) : (
                     <div className="grid grid-cols-2 gap-2">
-                      {wrappedGifts.map((gift) => (
+                      {wrappedGifts.map((gift, index) => (
                         <button
                           key={gift.id}
                           onClick={() => { openGift(gift.id); setOpenPickerVisible(false) }}
-                          className="flex flex-col items-center justify-center rounded-xl bg-white/90 p-4 active:scale-95 transition-transform"
+                          aria-label={`Open mystery gift ${index + 1}`}
+                          className="flex flex-col items-center justify-center rounded-xl border-[2.5px] border-ink bg-white p-3 active:scale-95 transition-transform"
                         >
-                          <span className="text-4xl">🎁</span>
-                          <p className="mt-1.5 text-xs text-[#1A2B4A]/50 font-medium">
-                            Mystery Gift
+                          <GiftBox seed={index} size={64} />
+                          <p className="mt-1 text-xs text-ink/60 font-bold">
+                            Mystery gift
                           </p>
                         </button>
                       ))}
@@ -243,12 +239,12 @@ export default function PlayPage({
             stealableGifts.length > 0 ? (
               <button
                 onClick={() => setStealSheetOpen(true)}
-                className="min-h-16 w-full rounded-2xl border-2 border-white text-white font-bold text-xl active:scale-95 transition-transform"
+                className="pf-btn pf-btn-lg pf-btn-red w-full !min-h-16 !text-xl"
               >
-                STEAL A GIFT
+                Steal a gift
               </button>
             ) : (
-              <p className="text-white/50 text-sm text-center">No gifts to steal yet</p>
+              <p className="text-ink/70 text-sm font-semibold text-center">Nothing to steal yet. Open one.</p>
             )
           )}
 
@@ -261,12 +257,13 @@ export default function PlayPage({
               className="fixed inset-0 bg-black/60 z-40"
               onClick={() => setStealSheetOpen(false)}
             />
-            <div className="fixed inset-x-0 bottom-0 bg-white rounded-t-2xl shadow-xl z-50 max-h-[70vh] overflow-y-auto">
-              <div className="sticky top-0 bg-white flex items-center justify-between px-4 py-3 border-b border-zinc-200">
-                <h2 className="font-bold text-[#1A2B4A] text-lg">Steal a Gift</h2>
+            <div className="pf-pop fixed inset-x-0 bottom-0 bg-tusk text-ink rounded-t-3xl border-t-[3px] border-x-[3px] border-ink z-50 max-h-[72vh] overflow-y-auto">
+              <div className="sticky top-0 bg-tusk flex items-center justify-between px-4 py-3 border-b-[3px] border-ink">
+                <h2 className="pf-display text-ink text-2xl">Pick your target</h2>
                 <button
                   onClick={() => setStealSheetOpen(false)}
-                  className="w-8 h-8 flex items-center justify-center rounded-full text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 font-bold text-lg transition-colors"
+                  aria-label="Close"
+                  className="w-10 h-10 flex items-center justify-center rounded-full border-[2.5px] border-ink bg-white text-ink font-bold text-lg"
                 >
                   ✕
                 </button>
@@ -274,7 +271,7 @@ export default function PlayPage({
 
               <div className="p-4">
                 {stealableGifts.length === 0 ? (
-                  <p className="text-center text-zinc-400 text-sm py-8">
+                  <p className="text-center text-ink/60 text-sm font-semibold py-8">
                     No gifts available to steal
                   </p>
                 ) : (
@@ -285,26 +282,24 @@ export default function PlayPage({
                         <button
                           key={gift.id}
                           onClick={() => stealGift(gift.id)}
-                          className="w-full flex items-center gap-3 rounded-xl border border-zinc-200 p-3 text-left active:bg-zinc-50 transition-colors"
+                          className="w-full flex items-center gap-3 rounded-2xl border-[2.5px] border-ink bg-white p-3 text-left active:bg-loot/30 transition-colors"
                         >
                           {gift.image_url ? (
                             <img
                               src={gift.image_url}
                               alt={gift.gift_name}
-                              className="w-14 h-14 rounded-lg object-cover shrink-0"
+                              className="w-16 h-16 rounded-xl border-2 border-ink object-cover shrink-0"
                             />
                           ) : (
-                            <div className="w-14 h-14 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0">
-                              <span className="text-2xl">🎁</span>
-                            </div>
+                            <GiftBox seed={1} size={56} className="shrink-0" />
                           )}
 
                           <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-[#1A2B4A] truncate text-sm">
+                            <p className="font-extrabold text-ink truncate">
                               {gift.gift_name}
                             </p>
                             {holder && (
-                              <p className="text-xs text-zinc-400 mt-0.5">
+                              <p className="text-sm font-medium text-ink/60 mt-0.5">
                                 Held by {holder.display_name}
                               </p>
                             )}
@@ -313,17 +308,15 @@ export default function PlayPage({
                               {[0, 1, 2].map((i) => (
                                 <span
                                   key={i}
-                                  className={`w-2 h-2 rounded-full ${
-                                    i < gift.steal_count ? 'bg-[#B8922A]' : 'bg-zinc-200'
+                                  className={`w-2.5 h-2.5 rounded-full border-[1.5px] border-ink ${
+                                    i < gift.steal_count ? 'bg-redhanded' : 'bg-white'
                                   }`}
                                 />
                               ))}
                             </div>
                           </div>
 
-                          <span className="text-[#B8922A] font-bold text-sm shrink-0">
-                            Steal →
-                          </span>
+                          <span className="pf-chip pf-chip-live shrink-0">Steal</span>
                         </button>
                       )
                     })}
@@ -340,11 +333,11 @@ export default function PlayPage({
 
   // ── Normal mobile layout ──────────────────────────────────────
   return (
-    <div className="flex flex-col h-screen bg-[#1A2B4A] text-white">
+    <div className="pf-page flex flex-col !min-h-0 h-dvh">
 
       {/* Error toast */}
       {errorMsg && (
-        <div className="fixed top-4 inset-x-4 bg-red-600 text-white rounded-xl px-4 py-3 text-sm font-medium z-50 shadow-lg">
+        <div className="fixed top-4 inset-x-4 bg-redhanded text-ink border-[3px] border-ink rounded-2xl px-4 py-3 font-extrabold z-[70]">
           {errorMsg}
         </div>
       )}
@@ -360,75 +353,66 @@ export default function PlayPage({
             transition={{ duration: 0.3 }}
             className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
           >
-            {stealAnnouncement ? (
-              <div className="bg-[#7A1F2E] rounded-3xl px-12 py-10 text-center shadow-2xl max-w-lg mx-4">
-                <div className="text-6xl mb-4">🎁💨</div>
-                <div className="text-4xl font-bold text-white mb-3">PILFER!</div>
-                <div className="text-white/90 text-lg leading-snug">{stealAnnouncement}</div>
-              </div>
-            ) : (
-              <div className="bg-[#B8922A] rounded-3xl px-12 py-10 text-center shadow-2xl max-w-lg mx-4">
-                <div className="text-6xl mb-4">🔒</div>
-                <div className="text-4xl font-bold text-white mb-3">LOCKED!</div>
-                <div className="text-white/90 text-lg">{lockAnnouncement}</div>
-              </div>
-            )}
+            <Announcement
+              kind={stealAnnouncement ? 'steal' : 'lock'}
+              text={stealAnnouncement ?? lockAnnouncement ?? ''}
+            />
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Sticky top bar */}
       {game?.status === 'complete' ? (
-        <div className="sticky top-0 z-10 bg-[#1A2B4A] border-b border-white/10 px-4 py-3 shrink-0">
-          <p className="text-sm font-semibold text-white text-center">
-            🎉 Game Over! Keep chatting — host will end the game shortly
+        <div className="sticky top-0 z-10 bg-loot text-ink border-b-[3px] border-ink px-4 py-3 shrink-0">
+          <p className="font-extrabold text-center">
+            That&apos;s the game. Keep chatting, the host will open the recap shortly.
           </p>
         </div>
       ) : (
-        <div className="sticky top-0 z-10 bg-[#1A2B4A] border-b border-white/10 px-4 py-3 flex items-center justify-between shrink-0">
-          <p className="text-sm font-medium text-white/70">
+        <div className="sticky top-0 z-10 bg-alley border-b-[3px] border-ink px-4 py-3 flex items-center justify-between gap-3 shrink-0">
+          <p className="flex items-center gap-2.5 min-w-0 text-base font-medium text-tusk/70">
             {currentTurnPlayer ? (
               <>
-                It&apos;s{' '}
-                <span className="text-white font-semibold">{currentTurnPlayer.display_name}</span>
-                &apos;s turn
+                <Avatar name={currentTurnPlayer.display_name} size={32} />
+                <span className="truncate">
+                  <span className="text-tusk font-extrabold">{currentTurnPlayer.display_name}</span>
+                  &apos;s turn
+                </span>
               </>
             ) : (
-              <span className="text-white/40">Waiting for game to start…</span>
+              <span className="text-tusk/40">Waiting for game to start…</span>
             )}
           </p>
           {isSpectator && (
-            <span className="text-xs bg-white/10 rounded-full px-3 py-1 font-medium">
-              👁 Spectating
-            </span>
+            <span className="pf-chip pf-chip-quiet shrink-0">Watching</span>
           )}
         </div>
       )}
 
       {/* Gift holder — hidden for spectators */}
       {!isSpectator && (
-        <div className="px-4 py-3 border-b border-white/10 shrink-0">
+        <div className="px-4 py-3 border-b-2 border-tusk/10 bg-midnight/80 shrink-0">
           {myGift ? (
             <div className="flex items-center gap-3">
               {myGift.image_url && (
                 <img
                   src={myGift.image_url}
                   alt={myGift.gift_name}
-                  className="w-12 h-12 rounded-lg object-cover shrink-0"
+                  className="w-14 h-14 rounded-xl border-2 border-tusk/40 object-cover shrink-0"
                 />
               )}
               <div className="min-w-0">
-                <p className="text-xs text-white/40 mb-0.5">You&apos;re holding</p>
-                <p className="text-sm font-semibold truncate">{myGift.gift_name}</p>
+                <p className="text-xs font-bold text-tusk/50 mb-0.5">You&apos;re holding</p>
+                <p className="font-extrabold truncate">{myGift.gift_name}</p>
                 {myGift.steal_count > 0 && (
-                  <p className="text-xs text-[#B8922A]">
-                    🔄 Stolen {myGift.steal_count}×
+                  <p className="text-xs font-bold text-loot">
+                    Stolen {myGift.steal_count} {myGift.steal_count === 1 ? 'time' : 'times'}
                   </p>
                 )}
               </div>
             </div>
           ) : (
-            <p className="text-sm text-white/30">You don&apos;t have a gift yet</p>
+            <p className="text-sm font-medium text-tusk/50">You don&apos;t have a gift yet</p>
           )}
         </div>
       )}
@@ -436,8 +420,8 @@ export default function PlayPage({
       {/* Scrollable live feed */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
         {feedEvents.length === 0 && (
-          <p className="text-center text-white/20 text-sm mt-8">
-            Feed is quiet… for now.
+          <p className="text-center text-tusk/45 text-sm font-medium mt-8">
+            All quiet. The first steal changes that.
           </p>
         )}
         {feedEvents.map((event) => {
@@ -445,16 +429,16 @@ export default function PlayPage({
           return (
             <div
               key={event.id}
-              className="rounded-xl px-3 py-2"
+              className="rounded-2xl px-3.5 py-2.5"
               style={getFeedEventStyle(event)}
             >
               {player && (
-                <p className="text-xs font-semibold text-[#B8922A] mb-0.5">
-                  {player.role === 'spectator' && <span className="mr-1">👁</span>}
+                <p className="text-xs font-extrabold text-loot mb-0.5">
+                  {player.role === 'spectator' && <span className="mr-1" aria-hidden="true">👀</span>}
                   {player.display_name}
                 </p>
               )}
-              <p className="text-sm text-white/80">{event.content}</p>
+              <p className="text-[0.95rem] font-medium text-tusk/90">{event.content}</p>
             </div>
           )
         })}
@@ -462,7 +446,7 @@ export default function PlayPage({
       </div>
 
       {/* Sticky bottom — taunts + emoji bar */}
-      <div className="sticky bottom-0 bg-[#1A2B4A] border-t border-white/10 shrink-0">
+      <div className="sticky bottom-0 bg-alley border-t-[3px] border-ink shrink-0">
 
         {/* Taunt bar — horizontal scroll */}
         <div className="px-4 pt-3 pb-2 overflow-x-auto">
@@ -471,7 +455,7 @@ export default function PlayPage({
               <button
                 key={taunt}
                 onClick={() => sendFeedEvent(taunt, 'taunt')}
-                className="min-h-10 rounded-full border border-white/20 px-4 py-2 text-sm text-white/60 whitespace-nowrap hover:bg-white/10 active:bg-white/20 transition-colors"
+                className="min-h-10 rounded-full border-2 border-tusk/35 px-4 py-2 text-sm font-bold text-tusk/85 whitespace-nowrap hover:bg-tusk/10 active:bg-loot active:text-ink transition-colors"
               >
                 {taunt}
               </button>
@@ -485,7 +469,8 @@ export default function PlayPage({
             <button
               key={emoji}
               onClick={() => sendFeedEvent(emoji, 'reaction')}
-              className="min-h-12 rounded-xl bg-white/5 text-2xl flex items-center justify-center active:bg-white/20 active:scale-90 transition-all"
+              aria-label={`React with ${emoji}`}
+              className="min-h-12 rounded-2xl border-2 border-tusk/15 bg-midnight text-2xl flex items-center justify-center active:bg-loot active:scale-90 transition-all"
             >
               {emoji}
             </button>

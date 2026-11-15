@@ -6,6 +6,7 @@ import { fulfillCheckoutSession } from '@/lib/games'
 import { stripe } from '@/lib/stripe'
 import PricingTiers from './PricingTiers'
 import GameSetupForm from './GameSetupForm'
+import { StatusScreen } from '@/components/brand/Shell'
 
 export default async function NewGamePage({
   searchParams,
@@ -46,30 +47,28 @@ export default async function NewGamePage({
 
   if (!game) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-950 px-4">
-        <div className="max-w-md text-center space-y-4">
-          <h1 className="text-2xl font-bold text-white">We&apos;re confirming your payment</h1>
-          <p className="text-zinc-400">
-            This usually takes a few seconds. Please don&apos;t pay again — refresh this page, or
-            check your dashboard. If your game doesn&apos;t appear within a few minutes, reply to
-            your Stripe receipt email and we&apos;ll sort it out.
-          </p>
-          <div className="flex justify-center gap-3">
+      <StatusScreen
+        title="Confirming your payment"
+        action={
+          <>
             <Link
               href={`/dashboard/new?session_id=${encodeURIComponent(session_id)}`}
-              className="rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-zinc-950 hover:bg-zinc-200"
+              className="pf-btn pf-btn-loot"
             >
-              Refresh
+              Check again
             </Link>
-            <Link
-              href="/dashboard"
-              className="rounded-lg border border-zinc-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-zinc-800"
-            >
-              My games
+            <Link href="/dashboard" className="pf-btn pf-btn-ghost">
+              Your games
             </Link>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      >
+        <p>
+          This usually takes a few seconds. Please don&apos;t pay again. If your game doesn&apos;t
+          appear within a few minutes, reply to your Stripe receipt email and we&apos;ll sort it
+          out.
+        </p>
+      </StatusScreen>
     )
   }
 
